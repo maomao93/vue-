@@ -234,13 +234,14 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     target.splice(key, 1, val)
     return val
   }
-  /*目标为对象并且目标包含key属性但目标原型不包含key*/
+  /*目标为对象并且目标包含key属性 && 对象原型不包含key*/
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
+  /*目标是否有__ob__属性(属性是Observer实例)*/
   const ob = (target: any).__ob__
-  /*避免向Vue实例或其根$数据添加反应性属性*/
+  /*避免向Vue实例或其根$数据添加反应性属性(_isVue只在实例中拥有并为true)*/
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
