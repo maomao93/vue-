@@ -26,10 +26,11 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
  */
 const bailRE = /[^\w.$]/
 export function parsePath (path: string): any {
+  //带(有点的或没有的)单词字符串(这个单词是Unicode字符)
   if (bailRE.test(path)) {
     return
   }
-  const segments = path.split('.')
+  const segments = path.split('.') //以点截成数组
   return function (obj) {
     for (let i = 0; i < segments.length; i++) {
       if (!obj) return

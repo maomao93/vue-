@@ -219,6 +219,9 @@ export function defineReactive (
  * triggers change notification if the property doesn't
  * already exist.
  */
+/*
+  在target添加新属性或修改这个属性的值,并为Vue实例或其根$数据添加属性时提示警告
+*/
 export function set (target: Array<any> | Object, key: any, val: any): any {
   //target目标值为undefined或null或为string、number、symbol、boolean类型报警告
   if (process.env.NODE_ENV !== 'production' &&
@@ -253,7 +256,9 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     target[key] = val
     return val
   }
+  //为ob.value(Observer实例)添加拦截器并且添加Observer实例
   defineReactive(ob.value, key, val)
+  //执行保存在subs中的watcher实例的update方法
   ob.dep.notify()
   return val
 }
@@ -261,17 +266,23 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
 /**
  * Delete a property and trigger change if necessary.
  */
+/*删除属性并在必要时触发更改*/
 export function del (target: Array<any> | Object, key: any) {
+  //target目标值为undefined或null或为string、number、symbol、boolean类型报警告
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
   ) {
     warn(`Cannot delete reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  /*目标值为数组并且是整数*/
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    /*删除key项*/
     target.splice(key, 1)
     return
   }
+  /*目标是否有__ob__属性(属性是Observer实例)*/
   const ob = (target: any).__ob__
+  /*避免向Vue实例或其根$数据删除反应性属性(_isVue只在实例中拥有并为true)*/
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid deleting properties on a Vue instance or its root $data ' +
@@ -279,13 +290,17 @@ export function del (target: Array<any> | Object, key: any) {
     )
     return
   }
+  // key不存在target中
   if (!hasOwn(target, key)) {
     return
   }
+  //不是数组直接删除对象中的属性
   delete target[key]
+  /*不存在Observer实例 return*/
   if (!ob) {
     return
   }
+  //执行保存在subs中的watcher实例的update方法
   ob.dep.notify()
 }
 

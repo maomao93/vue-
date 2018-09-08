@@ -79,7 +79,8 @@ export default class Watcher {
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
-      this.getter = parsePath(expOrFn)
+      this.getter = parsePath(expOrFn)//解析表达式或字符串并返回一个(方法或undefined)
+      /*返回undefined报错*/
       if (!this.getter) {
         this.getter = function () {}
         process.env.NODE_ENV !== 'production' && warn(
@@ -256,6 +257,7 @@ export default class Watcher {
       // remove self from vm's watcher list
       // this is a somewhat expensive operation so we skip it
       // if the vm is being destroyed.
+      /*如果组件已经在销毁就不做这一步，否则销毁_watchers中的这个实例*/
       if (!this.vm._isBeingDestroyed) {
         remove(this.vm._watchers, this)
       }

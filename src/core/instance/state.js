@@ -328,6 +328,7 @@ function initMethods (vm: Component, methods: Object) {
   }
 }
 
+/*初始化参数中的watch*/
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
@@ -341,10 +342,10 @@ function initWatch (vm: Component, watch: Object) {
     }
   }
 }
-/*作用: 处理各种形式的wantch参数*/
+/*作用: 处理各种形式的wantch参数，并返回一个在_watchers中删除自身watcher实例的方法*/
 function createWatcher (
   vm: Component,
-  expOrFn: string | Function,
+  expOrFn: string | Function,//watch的key可以是函数
   handler: any,
   options?: Object
 ) {
@@ -360,6 +361,10 @@ function createWatcher (
   return vm.$watch(expOrFn, handler, options)
 }
 
+/*
+  作用：为$data，$props添加拦截器来提示一些警告
+  初始化一些有关state的方法比如：$set、$delete、$watch
+*/
 export function stateMixin (Vue: Class<Component>) {
   // flow somehow has problems with directly declared definition object
   // when using Object.defineProperty, so we have to procedurally build up
@@ -387,24 +392,29 @@ export function stateMixin (Vue: Class<Component>) {
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   Object.defineProperty(Vue.prototype, '$props', propsDef)
 
+  /*为vue实例添加$set和$delete和$watch方法*/
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
   Vue.prototype.$watch = function (
-    expOrFn: string | Function,
+    expOrFn: string | Function,//watch的key可以是函数
     cb: any,
     options?: Object
   ): Function {
     const vm: Component = this
+    //这个是给用this.$watch直接设置准备的并且cb为对象(包含handler方法的对象)
     if (isPlainObject(cb)) {
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
     options.user = true
+    //生成一个Watcher实例
     const watcher = new Watcher(vm, expOrFn, cb, options)
+    /*立即执行这个函数*/
     if (options.immediate) {
       cb.call(vm, watcher.value)
     }
+    /*返回一个在_watchers中删除自身watcher实例的方法*/
     return function unwatchFn () {
       watcher.teardown()
     }
