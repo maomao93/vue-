@@ -50,21 +50,37 @@ export default class Watcher {
     isRenderWatcher?: boolean
   ) {
     this.vm = vm
+    /*
+      把vm._watcher赋值为这个实例
+        1、computed不会
+        2、watch不会
+    */
     if (isRenderWatcher) {
       vm._watcher = this
     }
+    //往vm._watcher添加这个实例
     vm._watchers.push(this)
-    // options
+
+    /*1、computed:{
+          computed: true
+         }
+      2、watch: {
+          handler: function (val, oldVal) { /!* ... *!/ },
+          deep: true,
+          immediate: true
+         }
+
+    */
     if (options) {
-      this.deep = !!options.deep
+      this.deep = !!options.deep //是否深度监听(用于watch的数组)
       this.user = !!options.user
-      this.computed = !!options.computed
-      this.sync = !!options.sync
+      this.computed = !!options.computed //是否是计算属性
+      this.sync = !!options.sync //父子组件传递数据时是否存在.sync
       this.before = options.before
     } else {
       this.deep = this.user = this.computed = this.sync = false
     }
-    this.cb = cb
+    this.cb = cb //回调
     this.id = ++uid // uid for batching
     this.active = true
     this.dirty = this.computed // for computed watchers
@@ -73,7 +89,7 @@ export default class Watcher {
     this.depIds = new Set()
     this.newDepIds = new Set()
     this.expression = process.env.NODE_ENV !== 'production'
-      ? expOrFn.toString()
+      ? expOrFn.toString() //将表达式转换成字符串
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
@@ -91,6 +107,7 @@ export default class Watcher {
         )
       }
     }
+    //计算属性的watcher实例中的value属性为undefined否则值为this.getter表达式输出的值
     if (this.computed) {
       this.value = undefined
       this.dep = new Dep()
@@ -103,11 +120,11 @@ export default class Watcher {
    * Evaluate the getter, and re-collect dependencies.
    */
   get () {
-    pushTarget(this)
+    pushTarget(this) //赋值Dep.target
     let value
     const vm = this.vm
     try {
-      value = this.getter.call(vm, vm)
+      value = this.getter.call(vm, vm) //返回表达式的值
     } catch (e) {
       if (this.user) {
         handleError(e, vm, `getter for watcher "${this.expression}"`)
@@ -118,9 +135,11 @@ export default class Watcher {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
       if (this.deep) {
+        //深遍历值
         traverse(value)
       }
-      popTarget()
+      popTarget() //赋值Dep.target
+      //清理依赖项收集
       this.cleanupDeps()
     }
     return value
@@ -143,21 +162,31 @@ export default class Watcher {
   /**
    * Clean up for dependency collection.
    */
+  //清理依赖项收集
   cleanupDeps () {
     let i = this.deps.length
     while (i--) {
       const dep = this.deps[i]
+      //不存在新的依赖中
       if (!this.newDepIds.has(dep.id)) {
-        dep.removeSub(this)
+        dep.removeSub(this) //把dep.subs中的这个Watcher实例移除
       }
     }
+    //保存旧依赖ID
     let tmp = this.depIds
+    //将新依赖ID集合赋值给旧依赖
     this.depIds = this.newDepIds
+    //旧依赖id集合赋值给新依赖
     this.newDepIds = tmp
+    //清空newDepIds
     this.newDepIds.clear()
+    //保存deps
     tmp = this.deps
+    //新依赖赋值给旧依赖
     this.deps = this.newDeps
+    //旧依赖赋值给新依赖
     this.newDeps = tmp
+    //清空新依赖数组
     this.newDeps.length = 0
   }
 

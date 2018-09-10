@@ -48,11 +48,16 @@ export default class Dep {
 Dep.target = null
 const targetStack = []
 
+//不是计算属性的时候会触发
 export function pushTarget (_target: ?Watcher) {
+  //Dep.target存在
   if (Dep.target) targetStack.push(Dep.target)
+  //将传入的Watcher赋值给Dep.target
   Dep.target = _target
 }
 
+//不是计算属性的时候会触发
 export function popTarget () {
+  //删除并返回数组的最后一个元素,把(最后一个Watcher实例或undefined)赋值给Dep.target
   Dep.target = targetStack.pop()
 }

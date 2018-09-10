@@ -43,14 +43,19 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    //为值添加一个__ob__属性并且不能用for In循环的描述符
     def(value, '__ob__', this)
+    //判断是否是数组
     if (Array.isArray(value)) {
-      const augment = hasProto
+      const augment = hasProto //{}是否存在原型链
         ? protoAugment
         : copyAugment
+      //为数组添加数组原型链
       augment(value, arrayMethods, arrayKeys)
+      /*递归为数组添加数组原型链*/
       this.observeArray(value)
     } else {
+      /*为对象添加拦截器*/
       this.walk(value)
     }
   }
@@ -60,6 +65,7 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
+  /*深遍历对象，为对象中的对象添加拦截器或数组添加数组原型链*/
   walk (obj: Object) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -70,6 +76,7 @@ export class Observer {
   /**
    * Observe a list of Array items.
    */
+  /*深遍历数组,为数组中的数组添加数组原型链或对象添加拦截器*/
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
@@ -83,6 +90,7 @@ export class Observer {
  * Augment an target Object or Array by intercepting
  * the prototype chain using __proto__
  */
+/*为目标添加原型链对象*/
 function protoAugment (target, src: Object, keys: any) {
   /* eslint-disable no-proto */
   target.__proto__ = src
@@ -94,6 +102,7 @@ function protoAugment (target, src: Object, keys: any) {
  * hidden properties.
  */
 /* istanbul ignore next */
+//为目标添加一个key属性并且不能用for In循环的描述符
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
   for (let i = 0, l = keys.length; i < l; i++) {
     const key = keys[i]
@@ -111,7 +120,7 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  */
 /*作用: 为值创建一个Observer实例*/
 export function observe (value: any, asRootData: ?boolean): Observer | void {
-  /*值不为对象或者值是否为VNode的实例*/
+  /*值不为(对象/数组)或者值是否为VNode的实例*/
   if (!isObject(value) || value instanceof VNode) {
     return
   }
@@ -308,6 +317,7 @@ export function del (target: Array<any> | Object, key: any) {
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
  */
+/*深遍历数组添加依赖项*/
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
     e = value[i]

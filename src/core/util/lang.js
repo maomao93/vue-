@@ -15,9 +15,9 @@ export function isReserved (str: string): boolean {
 export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
   Object.defineProperty(obj, key, {
     value: val,
-    enumerable: !!enumerable,
-    writable: true,
-    configurable: true
+    enumerable: !!enumerable, //表示能否通过for-in循环返回属性
+    writable: true, //表示能否修改属性的值
+    configurable: true //表示能否通过delete删除属性从而重新定义属性
   })
 }
 
@@ -25,6 +25,7 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
  * Parse simple path.
  */
 const bailRE = /[^\w.$]/
+/*解析表达式并返回一个可以获取obj中的表达式的值*/
 export function parsePath (path: string): any {
   //带(有点的或没有的)单词字符串(这个单词是Unicode字符)
   if (bailRE.test(path)) {

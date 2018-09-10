@@ -94,7 +94,7 @@ export function validateProp (
  * Get the default value of a prop.
  */
 /*给子组件的prop设置默认值*/
-/** 1、为设置默认值直接返回undefined
+/** 1、未设置默认值直接返回undefined
     2、类型为对象或数组时，默认值输出必须是函数否则报错
     3、子组件实例存在这个值，并且父组件也传递了只不过为undefined,则返回存在的这个值
     4、类型为对象或数组时，默认值为函数时输出函数返回的值

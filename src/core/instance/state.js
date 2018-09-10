@@ -86,6 +86,7 @@ function initProps (vm: Component, propsOptions: Object) {
       //将key解析成kebab-case写法
       const hyphenatedKey = hyphenate(key)
       //与vue保留变量名冲突的键名给予提示
+      //是否有与style,class的键名
       if (isReservedAttribute(hyphenatedKey) ||
           config.isReservedAttr(hyphenatedKey)) {
         warn(
@@ -209,9 +210,9 @@ function initComputed (vm: Component, computed: Object) {
       //生成Watcher实例
       watchers[key] = new Watcher(
         vm,
-        getter || noop,
-        noop,
-        computedWatcherOptions
+        getter || noop,//参数computed中key的get方法或空方法
+        noop, //空方法
+        computedWatcherOptions //参数确认是计算属性
       )
     }
 
