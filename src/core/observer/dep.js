@@ -10,7 +10,7 @@ let uid = 0
  * directives subscribing to it.
  */
 export default class Dep {
-  static target: ?Watcher;
+  static target: ?Watcher;//只有在创建Watcher实例并且不为计算属性的时候target才会存在值
   id: number;
   subs: Array<Watcher>;
 

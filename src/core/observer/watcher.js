@@ -60,7 +60,6 @@ export default class Watcher {
     }
     //往vm._watcher添加这个实例
     vm._watchers.push(this)
-
     /*1、computed:{
           computed: true
          }

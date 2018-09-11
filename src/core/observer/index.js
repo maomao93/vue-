@@ -135,8 +135,10 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
-    //shouldObserve为true && 不为服务端
-    // && (值为对象或者数组) && 对象可以被拓展 && 值的_isVue不为true
+    /*
+      shouldObserve为true && 不为服务端
+      && (值为对象或者数组) && 对象可以被拓展 && 值的_isVue不为true
+    */
     ob = new Observer(value)
   }
   //为根组件数据并且存在已经是Observer实例时

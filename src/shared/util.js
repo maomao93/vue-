@@ -105,6 +105,7 @@ export function toNumber (val: string): number | string {
  * Make a map and return a function for checking if a key
  * is in that map.
  */
+/*返回一个判断参数是否存在(把用,隔开的字符串参数生成的key:true对象)中的函数*/
 export function makeMap (
   str: string,
   expectsLowerCase?: boolean
@@ -115,7 +116,6 @@ export function makeMap (
     map[list[i]] = true
   }
   return expectsLowerCase
-
     ? val => map[val.toLowerCase()]
     : val => map[val]
 }
@@ -146,6 +146,7 @@ export function remove (arr: Array<any>, item: any): Array<any> | void {
 /**
  * Check whether the object has the property.
  */
+//用来判断一个属性是定义在对象本身而不是继承自原型链
 const hasOwnProperty = Object.prototype.hasOwnProperty
 export function hasOwn (obj: Object | Array<*>, key: string): boolean {
   return hasOwnProperty.call(obj, key)
@@ -175,6 +176,7 @@ export const camelize = cached((str: string): string => {
 /**
  * Capitalize a string.
  */
+/*将字符串首字母大写*/
 export const capitalize = cached((str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1)
 })
@@ -182,11 +184,12 @@ export const capitalize = cached((str: string): string => {
 /**
  * Hyphenate a camelCase string.
  */
+/*将驼峰转成-连接*/
 const hyphenateRE = /\B([A-Z])/g //匹配非单词边界(连贯的单词不能匹配)
 export const hyphenate = cached((str: string): string => {
   return str.replace(hyphenateRE, '-$1').toLowerCase()
   //将最后一个连贯的单词拼成(举例: showNumber 转换成show-number)
-  //也就是将驼峰装成-连接
+  //也就是将驼峰转成-连接
 })
 
 /**
@@ -212,7 +215,7 @@ function polyfillBind (fn: Function, ctx: Object): Function {
   boundFn._length = fn.length
   return boundFn
 }
-/*让fn中的this指向ctx*/
+/*返回一个让fn中的this指向ctx的fn*/
 function nativeBind (fn: Function, ctx: Object): Function {
   return fn.bind(ctx)
 }
@@ -226,6 +229,7 @@ export const bind = Function.prototype.bind
 /**
  * Convert an Array-like object to a real Array.
  */
+/*截取list从start下标开始的数据*/
 export function toArray (list: any, start?: number): Array<any> {
   start = start || 0
   let i = list.length - start
@@ -239,6 +243,7 @@ export function toArray (list: any, start?: number): Array<any> {
 /**
  * Mix properties into target object.
  */
+/*替换对象的属性值*/
 export function extend (to: Object, _from: ?Object): Object {
   for (const key in _from) {
     to[key] = _from[key]
@@ -279,6 +284,7 @@ export const identity = (_: any) => _
 /**
  * Generate a static keys string from compiler modules.
  */
+/*从编译器模块生成一个静态键字符串*/
 export function genStaticKeys (modules: Array<ModuleOptions>): string {
   return modules.reduce((keys, m) => {
     return keys.concat(m.staticKeys || [])

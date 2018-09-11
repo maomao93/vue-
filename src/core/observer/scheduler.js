@@ -127,6 +127,10 @@ function callActivatedHooks (queue) {
  * Jobs with duplicate IDs will be skipped unless it's
  * pushed when the queue is being flushed.
  */
+/*将一个观察者推入观察者队列。
+ *具有重复id的作业将被跳过，除非它是
+ *当队列被刷新时被推送。
+*/
 export function queueWatcher (watcher: Watcher) {
   const id = watcher.id
   if (has[id] == null) {

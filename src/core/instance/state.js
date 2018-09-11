@@ -35,7 +35,7 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
-/*为对象的属性添加拦截器*/
+/*为对象的属性添加存取描述符(由一对getter-setter函数功能来描述的属性)*/
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -168,6 +168,36 @@ function initData (vm: Component) {
   /*为data添加observe实例以便响应式*/
   observe(data, true /* asRootData */)
 }
+/*
+    **关于data初始化以及读取和修改进行的一系列操作**
+   1、observe(): 判断是否要创建Observer实例，返回一个Observer实例
+   2、Observer实例: 创建了一个Dep实例，并为data创建了一个值为Dep实例的__ob__属性并为这个属性
+    添加数据描述符(拥有可写或不可写值的属性).
+  3、 {
+    对象: walk(): 将对象的key转成数组，循环执行defineReactive(),参数为data和data[key]
+    数组: observeArray(): 循环数组每一项，并继续从第1步执行下来
+  }
+  4、defineReactive(): 创建一个Dep实例,获取data[key]的描述符(不存在get、set描述符),判断data[key]
+    是否为对象:
+      1、是: 将这个对象做observe()的参数从第1步在继续执行下来
+      2、否: 终止
+    然后为data的属性添加存取描述符(由一对getter-setter函数功能来描述的属性)
+      get():
+          1、存在关联的视图: 将关联视图的watcher实例放入这个属性的私有Dep实例的subs中
+            1、这个属性新值是对象或数组: 将关联视图的watcher实例放入childOb(将newVal改造的Observer实例)的Dep实例的subs中(保存在方法的内存中)
+              1、数组: 将关联视图的watcher实例放入新值的__ob__属性(Observer实例)的Dep实例的subs中(其实和上面一样,因为__ob__属性的值 = newVal改造的Observer实例)
+                然后递归判断新值的key书否还是数组，并重复上一步
+              2、不是
+            2、不存在
+          2、不存在
+      然后输出默认值
+      set():
+          1、data[key]为对象或数组: 将这个属性当做observe()的参数从第1步在继续执行下来(重新更改描述符)
+          2、不是: 终止
+      然后将watcher实例推入观察者队列等待更新与这个属性关联的视图
+      (我测试了下: {{mm}}就会把这个属性与视图关联)
+*/
+
 
 export function getData (data: Function, vm: Component): any {
   // #7573 disable dep collection when invoking data getters
