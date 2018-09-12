@@ -43,6 +43,13 @@ export function updateComponentListeners (
   target = undefined
 }
 
+/*
+   作用: 为Vue原型添加$on、$once、$off、$emit四个方法
+    $on:
+    $once:
+    $off:
+    $emit:
+*/
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {

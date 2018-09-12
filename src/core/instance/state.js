@@ -393,7 +393,7 @@ function createWatcher (
 }
 
 /*
-  作用：为$data，$props添加拦截器来提示一些警告
+  作用：为$data，$props添加拦截器来提示一些警告(这些时只读属性)
   初始化一些有关state的方法比如：$set、$delete、$watch
 */
 export function stateMixin (Vue: Class<Component>) {

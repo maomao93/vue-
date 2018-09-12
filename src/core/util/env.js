@@ -35,6 +35,8 @@ if (inBrowser) {
 // this needs to be lazy-evaled because vue may be required before
 // vue-server-renderer can set VUE_ENV
 let _isServer
+
+/*判断是服务端还是客户端*/
 export const isServerRendering = () => {
   if (_isServer === undefined) {
     /* istanbul ignore if */

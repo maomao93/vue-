@@ -50,6 +50,11 @@ export function initRender (vm: Component) {
   }
 }
 
+/*
+  为原型添加$nextTick、_render方法(以及在installRenderHelpers()中为Vue原型添加一系列方法)
+    $nextTick:
+    _render:
+*/
 export function renderMixin (Vue: Class<Component>) {
   // install runtime convenience helpers
   installRenderHelpers(Vue.prototype)
