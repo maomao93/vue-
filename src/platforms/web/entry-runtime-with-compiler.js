@@ -4,17 +4,21 @@ import config from 'core/config'
 import { warn, cached } from 'core/util/index'
 import { mark, measure } from 'core/util/perf'
 
+//导入运行时的Vue
 import Vue from './runtime/index'
 import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
 
+//根据 id 获取元素的 innerHTML
 const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
 })
 
+//用变量缓存运行时的Vue原型的$mount方法
 const mount = Vue.prototype.$mount
+//重新改写运行时的Vue原型的$mount方法
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
@@ -22,6 +26,7 @@ Vue.prototype.$mount = function (
   el = el && query(el)
 
   /* istanbul ignore if */
+  /*不是生产环境下,如果挂载在html或body上报警告*/
   if (el === document.body || el === document.documentElement) {
     process.env.NODE_ENV !== 'production' && warn(
       `Do not mount Vue to <html> or <body> - mount to normal elements instead.`
@@ -85,6 +90,7 @@ Vue.prototype.$mount = function (
  * Get outerHTML of elements, taking care
  * of SVG elements in IE as well.
  */
+//获取元素的outerHTML(包含innerHTML的全部内容外, 还包含对象标签本身)
 function getOuterHTML (el: Element): string {
   if (el.outerHTML) {
     return el.outerHTML
@@ -95,6 +101,7 @@ function getOuterHTML (el: Element): string {
   }
 }
 
+//为vue添加静态方法compile
 Vue.compile = compileToFunctions
 
 export default Vue

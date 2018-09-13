@@ -7,6 +7,12 @@ export function initAssetRegisters (Vue: GlobalAPI) {
   /**
    * Create asset registration methods.
    */
+  /*ASSET_TYPES = [
+    'component',
+    'directive',
+    'filter'
+  ]*/
+  //为vue添加静态方法component、directive、filter(分别用来全局注册组件，指令和过滤器)
   ASSET_TYPES.forEach(type => {
     Vue[type] = function (
       id: string,

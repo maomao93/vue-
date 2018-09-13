@@ -4,12 +4,14 @@ import { ASSET_TYPES } from 'shared/constants'
 import { defineComputed, proxy } from '../instance/state'
 import { extend, mergeOptions, validateComponentName } from '../util/index'
 
+//为vue添加静态方法extend
 export function initExtend (Vue: GlobalAPI) {
   /**
    * Each instance constructor, including Vue, has a unique
    * cid. This enables us to create wrapped "child
    * constructors" for prototypal inheritance and cache them.
    */
+  //为vue添加cid静态属性
   Vue.cid = 0
   let cid = 1
 

@@ -246,12 +246,14 @@ const defaultStrat = function (parentVal: any, childVal: any): any {
 /**
  * Validate component names
  */
+/*验证组件名称,并给予相应冲突的警告*/
 function checkComponents (options: Object) {
   for (const key in options.components) {
     validateComponentName(key) //解析组件名，防止出现不合理或与原html标签冲突
   }
 }
 
+/*与原html标签名冲突或不规范名称给予警告提示*/
 export function validateComponentName (name: string) {
   if (!/^[a-zA-Z][\w-]*$/.test(name)) {
     warn(
@@ -260,6 +262,7 @@ export function validateComponentName (name: string) {
       'and must start with a letter.'
     )
   }
+  /*不与slot,component字段名冲突*/  /*不与html标签和svg标签名冲突*/
   if (isBuiltInTag(name) || config.isReservedTag(name)) {
     warn(
       'Do not use built-in or reserved HTML elements as component ' +
@@ -273,18 +276,20 @@ export function validateComponentName (name: string) {
  * Object-based format.
  */
 function normalizeProps (options: Object, vm: ?Component) {
-  const props = options.props
+  const props = options.props //获取参数中的props
   if (!props) return
   const res = {}
   let i, val, name
+  //props是数组
   if (Array.isArray(props)) {
     i = props.length
     while (i--) {
       val = props[i]
       if (typeof val === 'string') {
-        name = camelize(val)
+        name = camelize(val)//把-改成驼峰写法
         res[name] = { type: null }
       } else if (process.env.NODE_ENV !== 'production') {
+        //props使用数组语法时，数组各项必须是字符串
         warn('props must be strings when using array syntax.')
       }
     }
@@ -368,9 +373,14 @@ export function mergeOptions (
   vm?: Component
 ): Object {
   if (process.env.NODE_ENV !== 'production') {
-    checkComponents(child)//检验组件名和标签
+    checkComponents(child)//检验组件名和标签并给予相应冲突的警告
   }
 
+  /*
+    允许合并另一个实例构造函数的options
+    1、Vue.extend创造出来的子类也是拥有这个属性的
+    2、Vue构造函数本身拥有这个属性
+  */
   if (typeof child === 'function') {
     child = child.options
   }

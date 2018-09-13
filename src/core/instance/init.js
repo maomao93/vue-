@@ -20,7 +20,7 @@ export function initMixin (Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
-    vm._uid = uid++ //为组件加个标记
+    vm._uid = uid++ //为每个实例添加个标记
     let startTag, endTag
     /* istanbul ignore if  主要在不是生产环境下为相应的视点做标记*/
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -30,8 +30,9 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     // a flag to avoid this being observed
-    vm._isVue = true //确定是vue
-    // merge options
+    //确定是vue实例
+    vm._isVue = true;
+    /*merge options 合并options*/
     if (options && options._isComponent) {
       // optimize internal component instantiation //优化内部组件实例化
       // since dynamic options merging is pretty slow, and none of the //因为动态选项合并非常慢，而且没有一个
@@ -65,8 +66,8 @@ export function initMixin (Vue: Class<Component>) {
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
       vm._name = formatComponentName(vm, false)
-      mark(endTag)
-      measure(`vue ${vm._name} init`, startTag, endTag)
+      mark(endTag)//初始化结束
+      measure(`vue ${vm._name} init`, startTag, endTag)//对这两个标记点进行性能计算
     }
 
     if (vm.$options.el) {
@@ -96,6 +97,19 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 }
 
 export function resolveConstructorOptions (Ctor: Class<Component>) {
+  /*Vue.options = {
+    components: {
+      KeepAlive
+      Transition,
+      TransitionGroup
+    },
+    directives:{
+      model,
+      show
+    },
+    filters: Object.create(null),
+    _base: Vue
+  }*/
   let options = Ctor.options
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)

@@ -172,6 +172,7 @@ const camelizeRE = /-(\w)/g
 export const camelize = cached((str: string): string => {
   return str.replace(camelizeRE, (_, c) => c ? c.toUpperCase() : '')
 })
+/*['与-(\w)匹配的值', "在匹配的值后面与(\w)匹配的值",{如果后面还有(\d)这些的会依次匹配下去}'与-(w)匹配的值的下标', '被替换的值']*/
 
 /**
  * Capitalize a string.

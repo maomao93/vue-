@@ -14,6 +14,7 @@ if (isIE9) {
   document.addEventListener('selectionchange', () => {
     const el = document.activeElement
     if (el && el.vmodel) {
+      //为节点添加input事件
       trigger(el, 'input')
     }
   })
@@ -138,6 +139,11 @@ function onCompositionEnd (e) {
   trigger(e.target, 'input')
 }
 
+/*
+  1、创建HTML事件
+  2、初始化新事件对象的属性
+  3、触发事件
+*/
 function trigger (el, type) {
   const e = document.createEvent('HTMLEvents')
   e.initEvent(type, true, true)
