@@ -25,12 +25,73 @@ import {
  * how to merge a parent option value and a child option
  * value into the final value.
  */
+/*结论: 拿不到 vm 参数，那么处理的就是子组件的选项,因为子组件是不需要实例化的,是通过Vue.extend创造出来的*/
 const strats = config.optionMergeStrategies
-
+/*  初始化strats对象
+  strats = {
+    el: function (parent, child, vm, key) {
+      if (!vm) {
+        warn(
+          `option "${key}" can only be used during instance ` +
+          'creation with the `new` keyword.'
+        )
+      }
+      return child === undefined ? parent : child
+    },
+    propsData: function (parent, child, vm, key) {
+      if (!vm) {
+        warn(
+          `option "${key}" can only be used during instance ` +
+          'creation with the `new` keyword.'
+        )
+      }
+      return child === undefined ? parent : child
+    },
+    data: function (parentVal, childVal, vm) {
+      //没有vue实例说明处理的是子组件选项
+      if (!vm) {
+        //存在并且不是function类型并且不是生产环境报警告，提示option的data属性要是工厂模式的函数
+        if (childVal && typeof childVal !== 'function') {
+          process.env.NODE_ENV !== 'production' && warn(
+            'The "data" option should be a function ' +
+            'that returns a per-instance value in component ' +
+            'definitions.',
+            vm
+          )
+          return parentVal
+        }
+        return mergeDataOrFn(parentVal, childVal)
+      }
+      return mergeDataOrFn(parentVal, childVal, vm)
+    },
+    beforeCreate,
+    created,
+    beforeMount,
+    mounted,
+    beforeUpdate,
+    updated,
+    destroyed,
+    activated,
+    deactivated,
+    errorCaptured,
+    activated,
+    activated,
+    components,
+    directive,
+    filter,
+    watch,
+    props,
+    methods,
+    inject,
+    computed,
+    provide,
+  }
+*/
 /**
  * Options with restrictions
  */
 if (process.env.NODE_ENV !== 'production') {
+  /*提示你 el 选项或者 propsData 选项只能在使用 new 操作符创建实例的时候可用*/
   strats.el = strats.propsData = function (parent, child, vm, key) {
     if (!vm) {
       warn(
@@ -120,12 +181,10 @@ strats.data = function (
         'definitions.',
         vm
       )
-
       return parentVal
     }
     return mergeDataOrFn(parentVal, childVal)
   }
-
   return mergeDataOrFn(parentVal, childVal, vm)
 }
 
@@ -214,6 +273,7 @@ strats.watch = function (
 /**
  * Other object hashes.
  */
+/*合并parentVal和childVal对象为一个新对象,并对childVal参数检测是否为对象，否则报错*/
 strats.props =
 strats.methods =
 strats.inject =
@@ -223,25 +283,20 @@ strats.computed = function (
   vm?: Component,
   key: string
 ): ?Object {
+  //参数childVal存在并且不是生产环境，检测childVal是否为对象
   if (childVal && process.env.NODE_ENV !== 'production') {
     assertObjectType(key, childVal, vm)
   }
+  //不存在parentVal参数，直接返回childVal
   if (!parentVal) return childVal
   const ret = Object.create(null)
+  //将parentVal对象合并到一个原型为空的空对象中
   extend(ret, parentVal)
+  //存在childVal参数，那就将childVal对象合并进ret对象
   if (childVal) extend(ret, childVal)
   return ret
 }
 strats.provide = mergeDataOrFn
-
-/**
- * Default strategy.
- */
-const defaultStrat = function (parentVal: any, childVal: any): any {
-  return childVal === undefined
-    ? parentVal
-    : childVal
-}
 
 /**
  * Validate component names
@@ -275,12 +330,13 @@ export function validateComponentName (name: string) {
  * Ensure all props option syntax are normalized into the
  * Object-based format.
  */
+/*将props格式化成标准的props格式*/
 function normalizeProps (options: Object, vm: ?Component) {
   const props = options.props //获取参数中的props
   if (!props) return
   const res = {}
   let i, val, name
-  //props是数组
+  //props是数组转换成object格式
   if (Array.isArray(props)) {
     i = props.length
     while (i--) {
@@ -294,13 +350,15 @@ function normalizeProps (options: Object, vm: ?Component) {
       }
     }
   } else if (isPlainObject(props)) {
+    //props是对象类型
     for (const key in props) {
       val = props[key]
-      name = camelize(key)
+      name = camelize(key) //把-改成驼峰写法
       res[name] = isPlainObject(val)
         ? val
         : { type: val }
     }
+    /*格式化成标准的props格式*/
   } else if (process.env.NODE_ENV !== 'production') {
     warn(
       `Invalid value for option "props": expected an Array or an Object, ` +
@@ -314,17 +372,39 @@ function normalizeProps (options: Object, vm: ?Component) {
 /**
  * Normalize all injections into Object-based format
  */
+/*将inject格式化成标准的inject格式*/
+/*
+   测试结果provide可以有两种格式
+    1、值是直接赋值的
+      provide: {
+        val: 12312
+      }
+    2、值是与父组件耦合的
+      provide () {
+       return {
+          getVal: this.getVal,
+          val: this.val,
+          ll: this.ll
+       }
+     }
+*/
 function normalizeInject (options: Object, vm: ?Component) {
-  const inject = options.inject
+  const inject = options.inject //缓存参数中的inject属性
   if (!inject) return
-  const normalized = options.inject = {}
+  const normalized = options.inject = {} //清空参数中的inject属性
+  //inject属性为数组类型
   if (Array.isArray(inject)) {
     for (let i = 0; i < inject.length; i++) {
       normalized[inject[i]] = { from: inject[i] }
     }
+    /*将inject转换成标准的格式 val: {
+      from: 'val'  //匹配父组件中的provide的key名
+    }*/
   } else if (isPlainObject(inject)) {
+    //inject为对象格式，遍历对象
     for (const key in inject) {
-      const val = inject[key]
+      const val = inject[key] //获取key值
+      //判断key值是否为对象,是对象则将标准格式与值合并，否则转换成标准格式
       normalized[key] = isPlainObject(val)
         ? extend({ from: key }, val)
         : { from: val }
@@ -341,19 +421,25 @@ function normalizeInject (options: Object, vm: ?Component) {
 /**
  * Normalize raw function directives into object format.
  */
+/*将Directives格式成标准的Directives格式*/
 function normalizeDirectives (options: Object) {
-  const dirs = options.directives
+  const dirs = options.directives //缓存options.directives的值
   if (dirs) {
+    //遍历对象
     for (const key in dirs) {
-      const def = dirs[key]
+      const def = dirs[key] //获取options.directives对象的key值
+      //值的类型为function类型
       if (typeof def === 'function') {
+        //重新赋值key值为其添加属性值都为def方法的bind、update属性
         dirs[key] = { bind: def, update: def }
       }
     }
   }
 }
 
+//验证值是否为对象,不是报警告并提示哪里错误
 function assertObjectType (name: string, value: any, vm: ?Component) {
+  //不是对象报警告
   if (!isPlainObject(value)) {
     warn(
       `Invalid value for option "${name}": expected an Object, ` +
@@ -368,8 +454,8 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
  * Core utility used in both instantiation and inheritance.
  */
 export function mergeOptions (
-  parent: Object,
-  child: Object,
+  parent: Object, //构造函数自带的options
+  child: Object, //传入的参数options
   vm?: Component
 ): Object {
   if (process.env.NODE_ENV !== 'production') {
@@ -385,13 +471,15 @@ export function mergeOptions (
     child = child.options
   }
 
-  normalizeProps(child, vm)
-  normalizeInject(child, vm)
-  normalizeDirectives(child)
-  const extendsFrom = child.extends
+  normalizeProps(child, vm) //规范化props
+  normalizeInject(child, vm) //规范化Inject
+  normalizeDirectives(child) //规范化Directives
+  const extendsFrom = child.extends //缓存extends属性为extendsFrom
   if (extendsFrom) {
+    //重新赋值parent为一个原parent和extendsFrom合并的全新对象
     parent = mergeOptions(parent, extendsFrom, vm)
   }
+  //存在mixins属性并循环赋值parent为一个原parent和mixins[i]合并的全新对象
   if (child.mixins) {
     for (let i = 0, l = child.mixins.length; i < l; i++) {
       parent = mergeOptions(parent, child.mixins[i], vm)
@@ -399,9 +487,23 @@ export function mergeOptions (
   }
   const options = {}
   let key
+  /*
+    遍历parent对象,判断key名是否存在于初始化的strats对象中
+      1、存在: 返回strats[key]的值
+      2、不存在: 返回一个默认的初始函数
+    执行这个返回的函数 && 将这个函数返回的值赋值给options[key]
+  */
   for (key in parent) {
     mergeField(key)
   }
+  /*
+    遍历child对象,判断key名是否已经存在于parent对象中
+      1、存在: 不做任何事情
+      2、不存在: 判断key名是否存在于初始化的strats对象中
+            1、存在: 返回strats[key]的值
+            2、不存在: 返回一个默认的初始函数
+        执行这个返回的函数 && 将这个函数返回的值赋值给options[key]
+  */
   for (key in child) {
     if (!hasOwn(parent, key)) {
       mergeField(key)
@@ -412,6 +514,17 @@ export function mergeOptions (
     options[key] = strat(parent[key], child[key], vm, key)
   }
   return options
+}
+
+/**
+ * Default strategy.
+ */
+/*1、第二个参数没传或为undefined,返回第一个参数
+2、第二个参数存在，返回第二个参数*/
+const defaultStrat = function (parentVal: any, childVal: any): any {
+  return childVal === undefined
+    ? parentVal
+    : childVal
 }
 
 /**

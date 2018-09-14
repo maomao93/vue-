@@ -244,7 +244,7 @@ export function toArray (list: any, start?: number): Array<any> {
 /**
  * Mix properties into target object.
  */
-/*替换对象的属性值*/
+/*替换或合并对象的属性值*/
 export function extend (to: Object, _from: ?Object): Object {
   for (const key in _from) {
     to[key] = _from[key]
