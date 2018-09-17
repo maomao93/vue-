@@ -27,8 +27,8 @@ import {
  */
 /*结论: 拿不到 vm 参数，那么处理的就是子组件的选项,因为子组件是不需要实例化的,是通过Vue.extend创造出来的*/
 const strats = config.optionMergeStrategies
-/*  初始化strats对象
-  strats = {
+  //初始化strats对象
+/*  strats = {
     el: function (parent, child, vm, key) {
       if (!vm) {
         warn(
@@ -64,29 +64,264 @@ const strats = config.optionMergeStrategies
       }
       return mergeDataOrFn(parentVal, childVal, vm)
     },
-    beforeCreate,
-    created,
-    beforeMount,
-    mounted,
-    beforeUpdate,
-    updated,
-    destroyed,
-    activated,
-    deactivated,
-    errorCaptured,
-    activated,
-    activated,
-    components,
-    directive,
-    filter,
-    watch,
-    props,
-    methods,
-    inject,
-    computed,
-    provide,
+    beforeCreate: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    created: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    beforeMount: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    mounted: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    beforeUpdate: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    updated: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    destroyed: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    activated: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    deactivated: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    errorCaptured: function (parentVal, childVal) {
+      return
+      childVal ?
+        parentVal ?
+          parentVal.concat(childVal)
+          : Array.isArray(childVal) ?
+            childVal
+            : [childVal]
+        : parentVal
+    },
+    components: function (parentVal, childVal, vm, key) {
+      const res = Object.create(parentVal || null)
+      if (childVal) {
+        process.env.NODE_ENV !== 'production'
+        && assertObjectType(key, childVal, vm)
+        return extend(res, childVal)
+      } else {
+        return res
+      }
+    },
+    directives: function (parentVal, childVal, vm, key) {
+      const res = Object.create(parentVal || null)
+      if (childVal) {
+        process.env.NODE_ENV !== 'production'
+        && assertObjectType(key, childVal, vm)
+        return extend(res, childVal)
+      } else {
+        return res
+      }
+    },
+    filters: function (parentVal, childVal, vm, key) {
+      const res = Object.create(parentVal || null)
+      if (childVal) {
+        process.env.NODE_ENV !== 'production'
+        && assertObjectType(key, childVal, vm)
+        return extend(res, childVal)
+      } else {
+        return res
+      }
+    },
+    watch: function (parentVal, childVal, vm, key) {
+      if (parentVal === nativeWatch) parentVal = undefined
+      if (childVal === nativeWatch) childVal = undefined
+      if (!childVal) return Object.create(parentVal || null)
+      if (process.env.NODE_ENV !== 'production') {
+        assertObjectType(key, childVal, vm)
+      }
+      if (!parentVal) return childVal
+      const ret = {}
+      extend(ret, parentVal)
+      for (const key in childVal) {
+        let parent = ret[key]
+        const child = childVal[key]
+        if (parent && !Array.isArray(parent)) {
+          parent = [parent]
+        }
+        ret[key] = parent
+          ? parent.concat(child)
+          : Array.isArray(child) ? child : [child]
+      }
+      return ret
+    },
+    props: function (parentVal, childVal, vm, key) {
+      //参数childVal存在并且不是生产环境，检测childVal是否为对象
+      if (childVal && process.env.NODE_ENV !== 'production') {
+        assertObjectType(key, childVal, vm)
+      }
+      //不存在parentVal参数，直接返回childVal
+      if (!parentVal) return childVal
+      const ret = Object.create(null)
+      //将parentVal对象合并到一个原型为空的空对象中
+      extend(ret, parentVal)
+      //存在childVal参数，那就将childVal对象合并进ret对象
+      if (childVal) extend(ret, childVal)
+      return ret
+    },
+    methods: function (parentVal, childVal, vm, key) {
+      //参数childVal存在并且不是生产环境，检测childVal是否为对象
+      if (childVal && process.env.NODE_ENV !== 'production') {
+        assertObjectType(key, childVal, vm)
+      }
+      //不存在parentVal参数，直接返回childVal
+      if (!parentVal) return childVal
+      const ret = Object.create(null)
+      //将parentVal对象合并到一个原型为空的空对象中
+      extend(ret, parentVal)
+      //存在childVal参数，那就将childVal对象合并进ret对象
+      if (childVal) extend(ret, childVal)
+      return ret
+    },
+    inject: function (parentVal, childVal, vm, key) {
+      //参数childVal存在并且不是生产环境，检测childVal是否为对象
+      if (childVal && process.env.NODE_ENV !== 'production') {
+        assertObjectType(key, childVal, vm)
+      }
+      //不存在parentVal参数，直接返回childVal
+      if (!parentVal) return childVal
+      const ret = Object.create(null)
+      //将parentVal对象合并到一个原型为空的空对象中
+      extend(ret, parentVal)
+      //存在childVal参数，那就将childVal对象合并进ret对象
+      if (childVal) extend(ret, childVal)
+      return ret
+    },
+    computed: function (parentVal, childVal, vm, key) {
+      //参数childVal存在并且不是生产环境，检测childVal是否为对象
+      if (childVal && process.env.NODE_ENV !== 'production') {
+        assertObjectType(key, childVal, vm)
+      }
+      //不存在parentVal参数，直接返回childVal
+      if (!parentVal) return childVal
+      const ret = Object.create(null)
+      //将parentVal对象合并到一个原型为空的空对象中
+      extend(ret, parentVal)
+      //存在childVal参数，那就将childVal对象合并进ret对象
+      if (childVal) extend(ret, childVal)
+      return ret
+    },
+    provide: function (parentVal, childVal, vm) {
+      //不存在vue实例
+      if (!vm) {
+        // in a Vue.extend merge, both should be functions
+        //不存在需要childVal直接返回parentVal
+        if (!childVal) {
+          return parentVal
+        }
+        //不存在需要parentVal直接返回childVal
+        if (!parentVal) {
+          return childVal
+        }
+        // when parentVal & childVal are both present,
+        // we need to return a function that returns the
+        // merged result of both functions... no need to
+        // check if parentVal is a function here because
+        // it has to be a function to pass previous merges.
+        //当三者都没有时 || childVal和parentVal都存在时，返回下面这个函数
+        return function mergedDataFn () {
+          //如果参数为函数则传入的实际参数是函数返回的值,否则直接传入这个参数
+          //下面这个函数返回深度合并过的childVal或childVal函数的值
+          return mergeData(
+            typeof childVal === 'function' ? childVal.call(this, this) : childVal,
+            typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
+          )
+        }
+      }
+      //存在vue实例
+      else {
+        return function mergedInstanceDataFn () {
+          // instance merge
+          //缓存childVal或childVal为函数时返回的值
+          const instanceData = typeof childVal === 'function'
+            ? childVal.call(vm, vm)
+            : childVal
+          //缓存parentVal或parentVal为函数时返回的值
+          const defaultData = typeof parentVal === 'function'
+            ? parentVal.call(vm, vm)
+            : parentVal
+          //instanceData是否存在,存在则合并这两个对象,不存在返回默认的defaultData
+          if (instanceData) {
+            return mergeData(instanceData, defaultData)
+          } else {
+            return defaultData
+          }
+        }
+      }
+    },
   }
-*/
+  */
 /**
  * Options with restrictions
  */
@@ -106,17 +341,24 @@ if (process.env.NODE_ENV !== 'production') {
 /**
  * Helper that recursively merges two data objects together.
  */
+/*作用: 深度合并传入的2个类型为对象的参数*/
 function mergeData (to: Object, from: ?Object): Object {
   if (!from) return to
   let key, toVal, fromVal
   const keys = Object.keys(from)
   for (let i = 0; i < keys.length; i++) {
-    key = keys[i]
-    toVal = to[key]
-    fromVal = from[key]
+    key = keys[i] //缓存form的key名
+    toVal = to[key] //缓存to[key]的值
+    fromVal = from[key] //缓存from[key]的值
+    //key不存在to对象上,将key和key值设置到to对象上
     if (!hasOwn(to, key)) {
       set(to, key, fromVal)
     } else if (isPlainObject(toVal) && isPlainObject(fromVal)) {
+      /*
+        判断to[key]和from[key]的值是否都为对象
+          1、是: 递归这个函数
+          2、否: 继续下一个循环，知道退出循环
+      */
       mergeData(toVal, fromVal)
     }
   }
@@ -126,16 +368,20 @@ function mergeData (to: Object, from: ?Object): Object {
 /**
  * Data
  */
+/*作用: 返回一个[合并parentVal和 childVal]的方法*/
 export function mergeDataOrFn (
   parentVal: any,
   childVal: any,
   vm?: Component
 ): ?Function {
+  //不存在vue实例
   if (!vm) {
     // in a Vue.extend merge, both should be functions
+    //不存在需要childVal直接返回parentVal
     if (!childVal) {
       return parentVal
     }
+    //不存在需要parentVal直接返回childVal
     if (!parentVal) {
       return childVal
     }
@@ -144,21 +390,29 @@ export function mergeDataOrFn (
     // merged result of both functions... no need to
     // check if parentVal is a function here because
     // it has to be a function to pass previous merges.
+    //当三者都没有时 || childVal和parentVal都存在时，返回下面这个函数
     return function mergedDataFn () {
+      //如果参数为函数则传入的实际参数是函数返回的值,否则直接传入这个参数
+      //下面这个函数返回深度合并过的childVal或childVal函数的值
       return mergeData(
         typeof childVal === 'function' ? childVal.call(this, this) : childVal,
         typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
       )
     }
-  } else {
+  }
+  //存在vue实例
+  else {
     return function mergedInstanceDataFn () {
       // instance merge
+      //缓存childVal或childVal为函数时返回的值
       const instanceData = typeof childVal === 'function'
         ? childVal.call(vm, vm)
         : childVal
+      //缓存parentVal或parentVal为函数时返回的值
       const defaultData = typeof parentVal === 'function'
         ? parentVal.call(vm, vm)
         : parentVal
+      //instanceData是否存在,存在则合并这两个对象,不存在返回默认的defaultData
       if (instanceData) {
         return mergeData(instanceData, defaultData)
       } else {
@@ -173,7 +427,9 @@ strats.data = function (
   childVal: any,
   vm?: Component
 ): ?Function {
+  //判断是否有vue实例
   if (!vm) {
+    //没有实例并且childVal不是函数提示警告(这就是vue模板中data要是函数的原因)
     if (childVal && typeof childVal !== 'function') {
       process.env.NODE_ENV !== 'production' && warn(
         'The "data" option should be a function ' +
@@ -191,6 +447,7 @@ strats.data = function (
 /**
  * Hooks and props are merged as arrays.
  */
+/*合并生命周期钩子函数*/
 function mergeHook (
   parentVal: ?Array<Function>,
   childVal: ?Function | ?Array<Function>
@@ -215,6 +472,7 @@ LIFECYCLE_HOOKS.forEach(hook => {
  * a three-way merge between constructor options, instance
  * options and parent options.
  */
+//合并2个参数对象
 function mergeAssets (
   parentVal: ?Object,
   childVal: ?Object,
@@ -509,6 +767,7 @@ export function mergeOptions (
       mergeField(key)
     }
   }
+  //作用: 在options中缓存strats[key]或defaultStrat方法return出的数据
   function mergeField (key) {
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)
