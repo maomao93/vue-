@@ -472,15 +472,18 @@ LIFECYCLE_HOOKS.forEach(hook => {
  * a three-way merge between constructor options, instance
  * options and parent options.
  */
-//合并2个参数对象
+//合并2个参数对象(其实就是合并组件、指令、过滤器这些对象)
 function mergeAssets (
   parentVal: ?Object,
   childVal: ?Object,
   vm?: Component,
   key: string
 ): Object {
+  //__proto__是每个对象都有的一个属性，而prototype是函数才会有的属性
+  //parentVal存在则创建原型为parentVal的对象
   const res = Object.create(parentVal || null)
   if (childVal) {
+    //在非生产环境监测childVal是否为对象，并进行相应的警告提示
     process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
     return extend(res, childVal)
   } else {
@@ -498,6 +501,13 @@ ASSET_TYPES.forEach(function (type) {
  * Watchers hashes should not overwrite one
  * another, so we merge them as arrays.
  */
+/*
+  作用: 合并parentVal和childVal对象或将[parentVal和childVal对象中的属性]拼接成数组
+    1、childVal不存在，返回原型为parentVal的空对象
+    2、parentVal不存在，返回childVal
+    3、将parentVal或childVal的key值转为数组,
+      都存在这个key则将key值转为数组进行拼接成一个新数组
+*/
 strats.watch = function (
   parentVal: ?Object,
   childVal: ?Object,
@@ -505,26 +515,40 @@ strats.watch = function (
   key: string
 ): ?Object {
   // work around Firefox's Object.prototype.watch...
+  //Firefox浏览器的对象原型自带watch属性
   if (parentVal === nativeWatch) parentVal = undefined
   if (childVal === nativeWatch) childVal = undefined
   /* istanbul ignore if */
+  //不存在childVal，直接返回原型为parentVal || null的空对象
   if (!childVal) return Object.create(parentVal || null)
+  //非生产环境对childVal不为对象时警告提示
   if (process.env.NODE_ENV !== 'production') {
     assertObjectType(key, childVal, vm)
   }
+  //不存在parentVal直接返回childVal
   if (!parentVal) return childVal
   const ret = {}
+  //合并parentVal到一个新的空对象中
   extend(ret, parentVal)
+  //循环childVal
   for (const key in childVal) {
+    //缓存与新对象中key名相同的属性的值
     let parent = ret[key]
+    //缓存childVal[key]的值
     const child = childVal[key]
+    //parent && parent不为数组则将parent转化为数组
     if (parent && !Array.isArray(parent)) {
       parent = [parent]
     }
+    //存在parent，则将childVal[key]值拼接进parent数组中
+    //不存在parent，则判断childVal[key]的值是否为数组
+          //是: 返回缓存childVal[key]值的child
+          //不是： 将childVal[key]的值转换成数组返回
     ret[key] = parent
       ? parent.concat(child)
       : Array.isArray(child) ? child : [child]
   }
+  //返回这个新对象
   return ret
 }
 

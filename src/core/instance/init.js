@@ -47,12 +47,14 @@ export function initMixin (Vue: Class<Component>) {
       )
     }
     /* istanbul ignore else */
+    //在非生产环境为vm实例添加代理,并将实例赋值给vm._renderProxy
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm)
     } else {
       vm._renderProxy = vm
     }
     // expose real self
+    //将实例赋值给vm._self
     vm._self = vm
     initLifecycle(vm)
     initEvents(vm)
