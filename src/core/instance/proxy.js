@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
     'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
     'require' // for Webpack/Browserify
   )
-
+  //错误提示
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -51,7 +51,7 @@ if (process.env.NODE_ENV !== 'production') {
       const has = key in target //是否存在与目标中
       //判断key名是否存在于allowedGlobals函数中生成的对象中 || (key名是string类型 && 首字母是_)
       const isAllowed = allowedGlobals(key) || (typeof key === 'string' && key.charAt(0) === '_')
-      //不存在于目标中 && isAllowed为false提示警告
+      ////访问了一个没有定义在实例对象上(或原型链上)的属性 && isAllowed为false提示警告
       if (!has && !isAllowed) {
         warnNonPresent(target, key)
       }

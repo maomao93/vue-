@@ -39,7 +39,7 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment. //内部组件选项需要特殊处理。
       initInternalComponent(vm, options)//为当前组件实例的$option赋值
     } else {
-      //添加默认的一些option
+      //合并默认的一些option,并且格式化option中的一些属性，使其符合要求，并对不合理的警告提示
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -59,7 +59,7 @@ export function initMixin (Vue: Class<Component>) {
     initLifecycle(vm)
     initEvents(vm)
     initRender(vm)
-    callHook(vm, 'beforeCreate')
+    callHook(vm, 'beforeCreate') //执行实例的beforeCreate函数或数组中的函数
     initInjections(vm) // resolve injections before data/props
     initState(vm)//初始化参数中的data、methods、props等等
     initProvide(vm) // resolve provide after data/props
@@ -80,7 +80,7 @@ export function initMixin (Vue: Class<Component>) {
 
 /*为当前组件的$option赋值（主要是父子组件的一些通信方法和数据）*/
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
-  const opts = vm.$options = Object.create(vm.constructor.options)//将传入的option创建对象
+  const opts = vm.$options = Object.create(vm.constructor.options)//缓存将实例的构造函数的options对象作为原型生成的对象
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode //赋值父组件节点
   opts.parent = options.parent //赋值父组件实例

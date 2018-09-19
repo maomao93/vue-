@@ -22,28 +22,47 @@ export let activeInstance: any = null
 export let isUpdatingChildComponent: boolean = false
 
 export function initLifecycle (vm: Component) {
+  //缓存合并处理过后的$options
   const options = vm.$options
 
   // locate first non-abstract parent
+  //缓存当前实例的父组件
   let parent = options.parent
+  //父组件存在并且当前实例不是抽象的
+  /*
+    抽象组件: keep-alive、transition这些
+      特点1、一般不渲染真实DOM
+      特点2、不会出现在父子关系的路径上
+  */
   if (parent && !options.abstract) {
+    /*parent是抽象组件并且parent存在父组件*/
     while (parent.$options.abstract && parent.$parent) {
+      //将parent的父组件赋值给parent
       parent = parent.$parent
     }
+    //直到循环parent不为抽象组件时退出，也就是获取当前实例的第一个非抽象的父组件,
+    //将当前实例push进这个父组件的子组件属性$children中
     parent.$children.push(vm)
   }
-
+  //缓存当前实例的第一个非抽象组件
   vm.$parent = parent
+  //父组件存在则缓存父组件的根组件 不存在则缓存自身，表示自身就是根组件
   vm.$root = parent ? parent.$root : vm
-
+  //设置当前实例的$children为[]
   vm.$children = []
+  //设置当前实例的$refs为{}
   vm.$refs = {}
-
+  //设置当前_watcher为空
   vm._watcher = null
+  //设置当前_inactive为空
   vm._inactive = null
+  //设置当前_directInactive为false
   vm._directInactive = false
+  //设置当前_isMounted为false
   vm._isMounted = false
+  //设置当前_isDestroyed为false
   vm._isDestroyed = false
+  //设置当前_isBeingDestroyed为false
   vm._isBeingDestroyed = false
 }
 
@@ -318,6 +337,7 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+//执行生命周期hook函数
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
@@ -331,6 +351,16 @@ export function callHook (vm: Component, hook: string) {
       }
     }
   }
+  /*_hasHookEvent为true时，向父组件派发hook:+生命周期函数名*/
+  /*
+    可以这么为子组件添加生命周期钩子的事件侦听器
+    <child
+      @hook:beforeCreate="handleChildBeforeCreate"
+      @hook:created="handleChildCreated"
+      @hook:mounted="handleChildMounted"
+      @hook:生命周期钩子
+    />
+  */
   if (vm._hasHookEvent) {
     vm.$emit('hook:' + hook)
   }

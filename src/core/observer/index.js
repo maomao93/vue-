@@ -167,7 +167,7 @@ export function defineReactive (
     writable：表示能否修改属性的值
     Value：包含这个属性的数据值（个人认为其作用就是赋值）
   */
-  //在对象中存在并且该属性不能删除
+  //该属性的描述对象存在并且该属性不能删除或重新定义直接return
   if (property && property.configurable === false) {
     return
   }

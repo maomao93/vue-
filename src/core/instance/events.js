@@ -10,7 +10,9 @@ import {
 import { updateListeners } from '../vdom/helpers/index'
 
 export function initEvents (vm: Component) {
+  //当前实例的_events赋值为原型为空的空对象
   vm._events = Object.create(null)
+  //当前实例的_hasHookEvent为false
   vm._hasHookEvent = false
   // init parent attached events
   const listeners = vm.$options._parentListeners
@@ -54,14 +56,18 @@ export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
+    //判断event是否为数组
     if (Array.isArray(event)) {
+      //循环执行$on函数
       for (let i = 0, l = event.length; i < l; i++) {
         this.$on(event[i], fn)
       }
     } else {
+      //初始化vm._events[event]为[],并将方法push进数组
       (vm._events[event] || (vm._events[event] = [])).push(fn)
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
+      //监听函数名存在hook:时,将_hasHookEvent设置为true,作用: 监听子组件的生命周期执行情况
       if (hookRE.test(event)) {
         vm._hasHookEvent = true
       }

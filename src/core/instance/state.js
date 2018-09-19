@@ -35,7 +35,7 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
-/*为对象的属性添加存取描述符(由一对getter-setter函数功能来描述的属性)*/
+/*为对象的属性添加存取描述符(由一对getter-setter函数功能来描述的属性),并将data中的key定义vm实例上*/
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -47,9 +47,9 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 }
 
 export function initState (vm: Component) {
-  vm._watchers = [] //用来存放watcher实例的
-  const opts = vm.$options //父子组件通信用的数据
-  if (opts.props/*当前组件的props*/) initProps(vm, opts.props) //父组件传的和子组件想要接收的数据对比
+  vm._watchers = [] //设置_watchers为[],作用:用来存放watcher实例的
+  const opts = vm.$options //缓存$options(这个时候的$option中的某些属性已经格式化过了)
+  if (opts.props/*当前组件的props*/) initProps(vm, opts.props) //父组件传的和子组件想要接收的数据对比,并初始化props
   if (opts.methods) initMethods(vm, opts.methods)//初始化组件的methods
   /*初始化data*/
   if (opts.data) { //存在data初始化组件的data
@@ -58,7 +58,7 @@ export function initState (vm: Component) {
     observe(vm._data = {}, true /* asRootData */)
   }
   if (opts.computed) initComputed(vm, opts.computed) //初始化组件的Computed
-  //初始化watch(判断vm.$options.watch ！== undefined)
+  //初始化watch(判断vm.$options.watch存在并且不等于(Firefox浏览器中对象原型自带的watch))
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -124,8 +124,13 @@ function initData (vm: Component) {
   //取出参数中的data
   let data = vm.$options.data
 
+  /*
+    为什么还要判断data是否为函数,这个在格式化option的时候data不是一个函数吗？
+      原因是: beforeCreate在initData调用之前,所以是可以在beforeCreate方法中修改了vm.$options.data,
+        而$options又是对参数option的引用
+  */
   data = vm._data = typeof data === 'function'
-    ? getData(data, vm) //获取生产模式函数的返回值
+    ? getData(data, vm) //缓存函数的返回值
     : data || {}
   //data不为对象时报错警告
   if (!isPlainObject(data)) {
