@@ -15,7 +15,7 @@ export function isReserved (str: string): boolean {
 export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
   Object.defineProperty(obj, key, {
     value: val,
-    enumerable: !!enumerable, //表示能否通过for-in循环返回属性
+    enumerable: !!enumerable, //表示能否枚举
     writable: true, //表示能否修改属性的值
     configurable: true //表示能否通过delete删除属性从而重新定义属性
   })

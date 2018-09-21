@@ -6,7 +6,7 @@
 import { def } from '../util/index'
 
 const arrayProto = Array.prototype //数组构造函数的原型
-export const arrayMethods = Object.create(arrayProto)//创建原型为空的数组原型链对象
+export const arrayMethods = Object.create(arrayProto)//创建原型为数组原型的空对象
 
 const methodsToPatch = [
   'push',

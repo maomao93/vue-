@@ -16,6 +16,7 @@ import {
   isServerRendering
 } from '../util/index'
 
+//返回数组原型对象的key名生成的数组
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
 /**
@@ -43,7 +44,7 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
-    //为值添加一个__ob__属性并且不能用for In循环的描述符
+    //为值添加一个__ob__属性并且不能枚举的描述符
     def(value, '__ob__', this)
     //判断是否是数组
     if (Array.isArray(value)) {
@@ -102,7 +103,7 @@ function protoAugment (target, src: Object, keys: any) {
  * hidden properties.
  */
 /* istanbul ignore next */
-//为目标添加一个key属性并且不能用for In循环的描述符
+//为目标循环添加key属性并且不能枚举的描述符
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
   for (let i = 0, l = keys.length; i < l; i++) {
     const key = keys[i]
