@@ -165,7 +165,8 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
-      //属性名的第一个字符不是$或者_时为实例添加_data属性并为其添加拦截器
+      //属性名的第一个字符不是$或者_时为实例添加key属性并添加拦截器
+      //(读取实例上的key属性值其实是读取_data对象中的key属性值),这就是proxy()的作用
       proxy(vm, `_data`, key)
     }
   }
