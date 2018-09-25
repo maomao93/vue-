@@ -48,12 +48,12 @@ export class Observer {
     def(value, '__ob__', this)
     //判断是否是数组
     if (Array.isArray(value)) {
-      const augment = hasProto //{}是否存在原型链
+      const augment = hasProto //当前环境是否支持 __proto__ 属性
         ? protoAugment
         : copyAugment
-      //为数组添加数组原型链
+      //为数组的一些默认方法添加拦截
       augment(value, arrayMethods, arrayKeys)
-      /*递归为数组添加数组原型链*/
+      /*递归为数组添加拦截器*/
       this.observeArray(value)
     } else {
       /*为对象添加拦截器*/
@@ -66,7 +66,7 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
-  /*深遍历对象，为对象中的对象添加拦截器或数组添加数组原型链*/
+  /*深遍历对象，为对象中的对象或数组添加拦截器*/
   walk (obj: Object) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -77,7 +77,7 @@ export class Observer {
   /**
    * Observe a list of Array items.
    */
-  /*深遍历数组,为数组中的数组添加数组原型链或对象添加拦截器*/
+  /*深遍历数组,为数组中的数组或对象添加拦截器*/
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
@@ -176,12 +176,17 @@ export function defineReactive (
   // cater for pre-defined getter/setters
   const getter = property && property.get //存在则读取默认get
   const setter = property && property.set //存在则读取默认set
-  //只传了2个参数并且(vm._props不存在该属性或者该属性没有get或者只有set)
+  /*
+    1、arguments.length === 2,这个很好判断，只是为了让有些情况下执行这个方法的时候可以满足，以便于深度遍历(相当于为了兼容)
+    2、!getter || setter， 这句代码是没有get函数,也就是用户没用自定义过属性的get函数，那么就需要深度观测数据.
+      还有种用户即定义了get也定义了set函数，那么也需要深度观测数据，而后面又重写了get和set函数，在设置新值的时候观测数据,
+      如果没有 || setter会造成初始化的时候没有观测数据，可是在重新赋值过后又观测数据了，从而造成定义响应式数据时行为的不一致。
+  */
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-
-  let childOb = !shallow && observe(val) //值为对象或数组则创建一个Observer实例
+  //值为对象或数组则创建一个Observer实例
+  let childOb = !shallow && observe(val)
   //直接定义属性或修改这个对象的这个属性
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -195,6 +200,17 @@ export function defineReactive (
         if (childOb) {
           childOb.dep.depend()
           //如果是数组就深度遍历并存储这个watcher实例
+          /*
+            为什么数组要这么做?
+              arr: [
+                { a: 1 }
+              ]
+              比如: <div id="demo">
+                      {{arr}}
+                    </div>
+              这个时候只读取了arr并没有读取arr里面的项,也就是只有arr中的dep属性收集到了依赖而arr[0]并没有收集到依赖，
+              因为没有读取过，所以就造成了修改了数据也没有响应式，常常发现打印出的数据变化了但是页面怎么没变化(vue1中和vue2初期经常会出现)
+          */
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -233,6 +249,9 @@ export function defineReactive (
  */
 /*
   在target添加新属性或修改这个属性的值,并为Vue实例或其根$数据添加属性时提示警告
+  为什么改变数组项的时候要用$set而不是直接=？
+    原因: 直接=并不会执行数组的set方法,因为下标不是访问器属性(它只会做get()),
+    而在$set中是会直接执行那些依赖的
 */
 export function set (target: Array<any> | Object, key: any, val: any): any {
   //target目标值为undefined或null或为string、number、symbol、boolean类型报警告
