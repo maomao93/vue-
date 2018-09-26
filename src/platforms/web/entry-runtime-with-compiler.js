@@ -40,9 +40,12 @@ Vue.prototype.$mount = function (
     let template = options.template
     if (template) {
       if (typeof template === 'string') {
+        /*template属性值的第一个字符是#号(也就是节点的id)*/
         if (template.charAt(0) === '#') {
+          //获取节点中的el.innerHTML并缓存
           template = idToTemplate(template)
           /* istanbul ignore if */
+          //警告提示获取不到存在该id的节点
           if (process.env.NODE_ENV !== 'production' && !template) {
             warn(
               `Template element not found or is empty: ${options.template}`,
@@ -51,18 +54,27 @@ Vue.prototype.$mount = function (
           }
         }
       } else if (template.nodeType) {
+        /*这一种是template属性值是一个节点*/
         template = template.innerHTML
       } else {
+        /*以上都不属于则提示错误*/
         if (process.env.NODE_ENV !== 'production') {
           warn('invalid template option:' + template, this)
         }
         return this
       }
     } else if (el) {
+      //template属性不存在，el属性存在
+      //获取该节点
       template = getOuterHTML(el)
     }
+    /*
+      template属性值是个字符串但第一个字符不是#
+        比如: template: '<App/>'
+    */
     if (template) {
       /* istanbul ignore if */
+      //开始编译做标记
       if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
         mark('compile')
       }
@@ -79,6 +91,7 @@ Vue.prototype.$mount = function (
       /* istanbul ignore if */
       if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
         mark('compile end')
+        //对这两个标记点进行性能计算
         measure(`vue ${this._name} compile`, 'compile', 'compile end')
       }
     }
@@ -91,6 +104,7 @@ Vue.prototype.$mount = function (
  * of SVG elements in IE as well.
  */
 //获取元素的outerHTML(包含innerHTML的全部内容外, 还包含对象标签本身)
+/*IE9-11 中 SVG 标签元素是没有 innerHTML 和 outerHTML 这两个属性的*/
 function getOuterHTML (el: Element): string {
   if (el.outerHTML) {
     return el.outerHTML

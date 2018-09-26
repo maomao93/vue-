@@ -161,11 +161,15 @@ export function mountComponent (
   el: ?Element,
   hydrating?: boolean
 ): Component {
+  //获取处理过后的节点
   vm.$el = el
+  //判断是否有解析成render函数
   if (!vm.$options.render) {
+    //将render赋值createEmptyVNode函数(并且在非生产环境下提示警告)
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
+      //template属性值并且第一个字符串值不为# || 存在el时报警告
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
         warn(
@@ -182,10 +186,12 @@ export function mountComponent (
       }
     }
   }
+  /*执行beforeMount钩子函数*/
   callHook(vm, 'beforeMount')
 
   let updateComponent
   /* istanbul ignore if */
+  //在非生产环境下对这两个标记点进行性能计算
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
     updateComponent = () => {
       const name = vm._name

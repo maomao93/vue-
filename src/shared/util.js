@@ -156,7 +156,7 @@ export function hasOwn (obj: Object | Array<*>, key: string): boolean {
  * Create a cached version of a pure function.
  */
 /*创建一个原型为空的对象和{}不同，它没有原型链*/
-/*作用: 输出回调函数想要输出的东西*/
+/*作用: 输出回调函数想要输出的东西,通过缓存来避免重复求值,提升性能*/
 export function cached<F: Function> (fn: F): F {
   const cache = Object.create(null)
   return (function cachedFn (str: string) {

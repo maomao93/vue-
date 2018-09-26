@@ -268,14 +268,14 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     target.splice(key, 1, val)
     return val
   }
-  /*目标为对象并且目标包含key属性 && 对象原型不包含key*/
+  /*目标为对象并且目标包含key属性 && 对象原型上不包含key*/
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
   /*目标是否有__ob__属性(属性是Observer实例)*/
   const ob = (target: any).__ob__
-  /*避免向Vue实例或其根$数据添加反应性属性(_isVue只在实例中拥有并为true)*/
+  /*避免向Vue实例或其根数据data添加反应性属性(_isVue只在实例中拥有并为true,data是不收集依赖的)*/
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -283,11 +283,18 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  /*
+    什么情况下会出现下面的情况?
+      1、首先是纯对象
+      2、key名不在target或者在Object.prototype上
+      3、target初始化的时候没有被监测过
+      满足以上条件的只有目标的原型或目标的__ob__上添加key会出现
+  */
   if (!ob) {
     target[key] = val
     return val
   }
-  //为ob.value(Observer实例)添加拦截器并且添加Observer实例
+  //为ob.value(Observer实例)添加拦截器并且添加Observer实例(新值为对象或数组时添加数据监测)
   defineReactive(ob.value, key, val)
   //执行保存在subs中的watcher实例的update方法
   ob.dep.notify()
