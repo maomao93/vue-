@@ -271,9 +271,10 @@ export default class Watcher {
       this.deep
     ) {
       // set new value
-      const oldValue = this.value
-      this.value = value
+      const oldValue = this.value //获取旧值
+      this.value = value //设置新值
       this.dirty = false
+      //判断是用户定义还是内部定义
       if (this.user) {
         try {
           cb.call(this.vm, value, oldValue)
