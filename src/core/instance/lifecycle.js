@@ -193,6 +193,7 @@ export function mountComponent (
   /* istanbul ignore if */
   //在非生产环境下对这两个标记点进行性能计算
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    //updateComponent函数作用: 把渲染函数生成的虚拟DOM渲染成真正的DOM
     updateComponent = () => {
       const name = vm._name
       const id = vm._uid
@@ -200,11 +201,13 @@ export function mountComponent (
       const endTag = `vue-perf-end:${id}`
 
       mark(startTag)
+      //调用 vm.$options.render 函数并返回生成的虚拟节点(vnode)
       const vnode = vm._render()
       mark(endTag)
       measure(`vue ${name} render`, startTag, endTag)
 
       mark(startTag)
+      //把 vm._render 函数生成的虚拟节点渲染成真正的 DOM
       vm._update(vnode, hydrating)
       mark(endTag)
       measure(`vue ${name} patch`, startTag, endTag)

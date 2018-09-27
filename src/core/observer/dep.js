@@ -26,7 +26,7 @@ export default class Dep {
   removeSub (sub: Watcher) {
     remove(this.subs, sub)
   }
-
+  //读取属性时，会执行这个方法.这个就是收集依赖也就是收集watcher实例
   depend () {
     if (Dep.target) {
       Dep.target.addDep(this)
@@ -45,7 +45,7 @@ export default class Dep {
 // the current target watcher being evaluated.
 // this is globally unique because there could be only one
 // watcher being evaluated at any time.
-Dep.target = null
+Dep.target = null //设置Dep构造函数的私有属性
 const targetStack = []
 
 //不是计算属性的时候会触发
@@ -53,7 +53,7 @@ export function pushTarget (_target: ?Watcher) {
   //Dep.target存在
   if (Dep.target) targetStack.push(Dep.target)
   //将传入的Watcher赋值给Dep.target
-  Dep.target = _target
+  Dep.target = _target //将渲染函数的watcher实例赋值给Dep构造类的私有变量target
 }
 
 //不是计算属性的时候会触发

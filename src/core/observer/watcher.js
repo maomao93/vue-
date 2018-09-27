@@ -43,19 +43,21 @@ export default class Watcher {
   value: any;
 
   constructor (
-    vm: Component,
-    expOrFn: string | Function,
-    cb: Function,
-    options?: ?Object,
-    isRenderWatcher?: boolean
+    vm: Component, //组件实例对象 vm
+    expOrFn: string | Function, //要观察的表达式 expOrFn
+    cb: Function, //当被观察的表达式的值变化时的回调函数 cb
+    options?: ?Object, //一些传递给当前观察者对象的选项 option
+    isRenderWatcher?: boolean //用来标识该观察者实例是否是渲染函数的观察者
   ) {
     this.vm = vm
     /*
       把vm._watcher赋值为这个实例
         1、computed不会
         2、watch不会
+        3、初始渲染组件时会
     */
     if (isRenderWatcher) {
+      //将watch实例赋值给Vue实例的_watcher属性
       vm._watcher = this
     }
     //往vm._watcher添加这个实例
@@ -68,21 +70,33 @@ export default class Watcher {
           deep: true,
           immediate: true
          }
-
+      3、mounted: {
+          before () {
+            if (vm._isMounted) {
+              callHook(vm, 'beforeUpdate')
+            }
+          }
+        }
     */
     if (options) {
       this.deep = !!options.deep //是否深度监听(用于watch的数组)
-      this.user = !!options.user
+      this.user = !!options.user //标识当前观察者实例对象是 开发者定义的 还是 内部定义的
       this.computed = !!options.computed //是否是计算属性
       this.sync = !!options.sync //父子组件传递数据时是否存在.sync
-      this.before = options.before
+      this.before = options.before //这个初始化挂载组件的时候传递的参数
     } else {
       this.deep = this.user = this.computed = this.sync = false
     }
     this.cb = cb //回调
     this.id = ++uid // uid for batching
-    this.active = true
+    this.active = true //标识着该观察者实例对象是否是激活状态
     this.dirty = this.computed // for computed watchers
+    /*
+      1、newDepIds 属性用来在一次求值中避免收集重复的观察者
+      2、每次求值并收集观察者完成之后会清空 newDepIds 和 newDeps 这两个属性的值，
+        并且在被清空之前把值分别赋给了 depIds 属性和 deps 属性
+      3、depIds 属性用来避免重复求值时收集重复的观察者
+    */
     this.deps = []
     this.newDeps = []
     this.depIds = new Set()
@@ -111,6 +125,7 @@ export default class Watcher {
       this.value = undefined
       this.dep = new Dep()
     } else {
+      //执行this.get()并将返回值赋值给this.value
       this.value = this.get()
     }
   }
@@ -121,10 +136,13 @@ export default class Watcher {
   get () {
     pushTarget(this) //赋值Dep.target
     let value
+    //缓存Vue实例
     const vm = this.vm
     try {
+      //判断this.getter执行时是否报错
       value = this.getter.call(vm, vm) //返回表达式的值
     } catch (e) {
+      //判断是否是用户定义的
       if (this.user) {
         handleError(e, vm, `getter for watcher "${this.expression}"`)
       } else {
@@ -133,6 +151,7 @@ export default class Watcher {
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
+      //判断是否深度监听
       if (this.deep) {
         //深遍历值
         traverse(value)
@@ -147,11 +166,20 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
+  //添加Dep实例并往Dep实例中添加这个watcher实例，当然不是重复添加
   addDep (dep: Dep) {
+    //获取Dep实例的id
     const id = dep.id
+    //this.newDepIds不存在唯一标识符id
     if (!this.newDepIds.has(id)) {
+      //往this.newDepIds中添加唯一标识符id
       this.newDepIds.add(id)
+      //往this.newDepIds中添加Dep实例
       this.newDeps.push(dep)
+      /*
+        this.depIds中不存在唯一标识符id则执行Dep实例的addSub(),
+        这个方法是往Dep实例中添加watcher实例
+      */
       if (!this.depIds.has(id)) {
         dep.addSub(this)
       }
@@ -163,8 +191,10 @@ export default class Watcher {
    */
   //清理依赖项收集
   cleanupDeps () {
+    //获取deps的长度
     let i = this.deps.length
     while (i--) {
+      //缓存dep数组中的各项
       const dep = this.deps[i]
       //不存在新的依赖中
       if (!this.newDepIds.has(dep.id)) {

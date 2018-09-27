@@ -14,7 +14,7 @@ const seenObjects = new Set()
 /*对数据进行判断并进行深遍历*/
 export function traverse (val: any) {
   _traverse(val, seenObjects)
-  //清空数据
+  //清空数据也就是清除那些标识符dep.id
   seenObjects.clear()
 }
 
@@ -26,15 +26,16 @@ function _traverse (val: any, seen: SimpleSet) {
   if ((!isA && !isObject(val)) || Object.isFrozen(val) || val instanceof VNode) {
     return
   }
-  //值是否存在Observer实例
+  //值是否存在Observer实例(初始化data的时候属性值为数组或对象时监测数据创建的Observer实例也就是__ob__属性)
   if (val.__ob__) {
-    const depId = val.__ob__.dep.id //实例代表的id
+    const depId = val.__ob__.dep.id //Dep实例代表的id(每创建一个Dep实例id都会+1)
+    //判断set实例也就是seenObjects变量中是否存在唯一的标识符
     if (seen.has(depId)) {
       return
     }
     seen.add(depId) //添加进set结构中
   }
-  //数组递归不是获取对象key进行递归
+  //数组递归不是则获取对象key进行递归
   if (isA) {
     i = val.length
     while (i--) _traverse(val[i], seen)
