@@ -246,6 +246,7 @@ export default class Watcher {
     } else if (this.sync) {
       this.run()
     } else {
+      //将实例放入观察者队列中
       queueWatcher(this)
     }
   }
@@ -261,6 +262,7 @@ export default class Watcher {
   }
 
   getAndInvoke (cb: Function) {
+    //对于渲染函数的观察者来说就是重新执行渲染函数
     const value = this.get()
     if (
       value !== this.value ||
@@ -292,10 +294,14 @@ export default class Watcher {
    * This only gets called for computed property watchers.
    */
   evaluate () {
+    //计算属性标识表示只有是计算属性才会执行下面代码
     if (this.dirty) {
+      //获取最新值
       this.value = this.get()
+      //并将标识符设置为false(表示该计算属性只执行这个方法1次)
       this.dirty = false
     }
+    //返回计算属性get()返回的值
     return this.value
   }
 
@@ -303,6 +309,7 @@ export default class Watcher {
    * Depend on this watcher. Only for computed property watchers.
    */
   depend () {
+    //计算属性执行get时触发,在watcher实例放入该Dep实例,并将watcher实例放入该Dep实例的subs数组中
     if (this.dep && Dep.target) {
       this.dep.depend()
     }

@@ -132,18 +132,25 @@ function callActivatedHooks (queue) {
  *当队列被刷新时被推送。
 */
 export function queueWatcher (watcher: Watcher) {
+  //获取参数传入的观察者id标识符
   const id = watcher.id
+  //判断该实例是否已经在队列中
   if (has[id] == null) {
+    //将该观察者实例的标识符属性设置为true,表示该观察者实例已在队列中，避免重复放入队列中
     has[id] = true
+    //只有当队列没有执行更新时才会简单地将观察者追加到队列的尾部，这个flushing变量就是队列执行更新的标识符
     if (!flushing) {
       queue.push(watcher)
     } else {
+      //(触发计算属性的 get 拦截器函数时会有观察者入队的行为)
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
+      //获取队列的最后一个项的下标
       let i = queue.length - 1
       while (i > index && queue[i].id > watcher.id) {
         i--
       }
+
       queue.splice(i + 1, 0, watcher)
     }
     // queue the flush

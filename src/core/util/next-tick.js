@@ -28,6 +28,13 @@ function flushCallbacks () {
 let microTimerFunc
 let macroTimerFunc
 let useMacroTask = false
+/*
+  macro-task(宏任务)包括：script(整体代码), setTimeout, setInterval, setImmediate, I/O, UI rendering。
+  micro-task(微任务)包括：process.nextTick, Promises, Object.observe, MutationObserver。
+  执行顺序：函数调用栈清空只剩全局执行上下文，然后开始执行所有的micro-task。
+          当所有可执行的micro-task执行完毕之后。循环再次执行macro-task中的一个任务队列，
+          执行完之后再执行所有的micro-task，就这样一直循环。
+*/
 
 // Determine (macro) task defer implementation.
 // Technically setImmediate should be the ideal choice, but it's only available
@@ -59,9 +66,11 @@ if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
 
 // Determine microtask defer implementation.
 /* istanbul ignore next, $flow-disable-line */
+//判断环境是否支持Promise
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
   microTimerFunc = () => {
+    //所有同步函数执行完后再直接这个flushCallbacks
     p.then(flushCallbacks)
     // in problematic UIWebViews, Promise.then doesn't completely break, but
     // it can get stuck in a weird state where callbacks are pushed into the

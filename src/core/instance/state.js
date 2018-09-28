@@ -321,11 +321,12 @@ export function defineComputed (
 **/
 function createComputedGetter (key) {
   return function computedGetter () {
-    //判断是否在_computedWatchers中定义过
+    //判断是否在_computedWatchers中定义过并获取该计算属性watcher实例
     const watcher = this._computedWatchers && this._computedWatchers[key]
+    //存在该计算属性watcher实例
     if (watcher) {
       watcher.depend() //将这个watcher实例添加进subs中
-      return watcher.evaluate() //执行computed[key]方法
+      return watcher.evaluate() //执行computed[key]方法,并将watcher实例放入队列中
     }
   }
 }
