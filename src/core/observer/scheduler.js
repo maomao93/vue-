@@ -150,7 +150,6 @@ export function queueWatcher (watcher: Watcher) {
       while (i > index && queue[i].id > watcher.id) {
         i--
       }
-
       queue.splice(i + 1, 0, watcher)
     }
     // queue the flush

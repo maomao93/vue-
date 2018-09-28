@@ -8,10 +8,15 @@ import { isIOS, isNative } from './env'
 const callbacks = []
 let pending = false
 
+//作用: 执行所有的回调函数并清空callbacks
 function flushCallbacks () {
+  //将状态改为false
   pending = false
+  //获取所有需要执行的(包含回调函数的函数)
   const copies = callbacks.slice(0)
+  //清空callbacks数组
   callbacks.length = 0
+  //依次执行包含回调函数的函数
   for (let i = 0; i < copies.length; i++) {
     copies[i]()
   }
@@ -70,13 +75,16 @@ if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
   microTimerFunc = () => {
-    //所有同步函数执行完后再直接这个flushCallbacks
+    //所有同步函数执行完后再直接这个flushCallbacks(也就是将flushCallbacks 函数注册为 microtask(微任务))
     p.then(flushCallbacks)
     // in problematic UIWebViews, Promise.then doesn't completely break, but
     // it can get stuck in a weird state where callbacks are pushed into the
     // microtask queue but the queue isn't being flushed, until the browser
     // needs to do some other work, e.g. handle a timer. Therefore we can
     // "force" the microtask queue to be flushed by adding an empty timer.
+    /*怪异问题的变通方法，在一些 UIWebViews 中存在很奇怪的问题，即 microtask 没有被刷新，
+    对于这个问题的解决方案就是让浏览做一些其他的事情比如注册一个 (macro)task 即使这个 (macro)task 什么都不做，
+    这样就能够间接触发 microtask 的刷新*/
     if (isIOS) setTimeout(noop)
   }
 } else {
@@ -97,28 +105,36 @@ export function withMacroTask (fn: Function): Function {
   })
 }
 
+//全局API this.nextTick(),第一个参数是回调函数，第二个参数是改变回调的作用域(这个方法会强制使视图重新渲染)
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  //callbacks数组中添加函数(包含回调函数的函数)
   callbacks.push(() => {
+    //是否存在回调函数
     if (cb) {
       try {
+        //执行回调函数(因为回调函数时开发者自己定义的,所有有错误提示机制)
         cb.call(ctx)
       } catch (e) {
         handleError(e, ctx, 'nextTick')
       }
     } else if (_resolve) {
+      //将Promise状态改为success
       _resolve(ctx)
     }
   })
+  //判断状态是否为false
   if (!pending) {
     pending = true
     if (useMacroTask) {
       macroTimerFunc()
     } else {
+      //执行微任务，也就是确保同步任务执行完后执行所有callbacks中的函数
       microTimerFunc()
     }
   }
   // $flow-disable-line
+  //不存在回调并且支持Promise返回一个Promise函数(使用Promise会使当所有callbacks中的函数执行完后才会执行then中的回调)
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve
