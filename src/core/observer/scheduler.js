@@ -47,17 +47,23 @@ function flushSchedulerQueue () {
   //    user watchers are created before the render watcher)
   // 3. If a component is destroyed during a parent component's watcher run,
   //    its watchers can be skipped.
+  /*将watcher实例按id标识进行升序排列*/
   queue.sort((a, b) => a.id - b.id)
 
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
   for (index = 0; index < queue.length; index++) {
+    //依次获取watcher实例
     watcher = queue[index]
+    //存在watcher实例的before属性就执行before()
     if (watcher.before) {
       watcher.before()
     }
+    //缓存watcher实例id标识
     id = watcher.id
+    //将has数组中的标识清空,用来表示已经不在队列中,也就是初始化
     has[id] = null
+    //执行实例的run方法(watch的回调、computed的get方法, 渲染函数的updateComponent()等等都会在run方法中执行)
     watcher.run()
     // in dev build, check and stop circular updates.
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {

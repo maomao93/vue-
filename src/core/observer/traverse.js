@@ -27,6 +27,7 @@ function _traverse (val: any, seen: SimpleSet) {
     return
   }
   //值是否存在Observer实例(初始化data的时候属性值为数组或对象时监测数据创建的Observer实例也就是__ob__属性)
+  //(这段代码解决死循环的问题   obj1.data = obj2  obj2.data = obj1,如果不做处理就一直会执行下去)
   if (val.__ob__) {
     const depId = val.__ob__.dep.id //Dep实例代表的id(每创建一个Dep实例id都会+1)
     //判断set实例也就是seenObjects变量中是否存在唯一的标识符

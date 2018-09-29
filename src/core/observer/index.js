@@ -218,6 +218,20 @@ export function defineReactive (
       }
       return value
     },
+    /*
+      设置属性时先执行dep.notify(),在dep.notify()中执行各个watcher实例的update(),
+      update()中执行queueWatcher(),queueWatcher()中先将watcher实例放入queue数组中,
+      在执行nextTick(),在nextTick方法中将flushSchedulerQueue函数放入callbacks数组中,
+      并执行microTimerFunc(),microTimerFunc()中执行Promise的then函数这个函数会等
+      所有同步任务执行完后再执行,那么这个时候将会等各个watcher实例的update()执行完后，
+      也就是将所有的所有watcher实例放入queue数组中,然后这个时候所有的同步任务已执行完了,
+      然后执行then函数中的flushCallbacks函数,这个函数中将会把callbacks数组中的所有函数执行,
+      那么就是执行flushSchedulerQueue函数,这个函数会依次执行queue数组中watcher的run函数,
+      run函数中执行getAndInvoke(),getAndInvoke()中执行get(),get()中会设置Dep.target为当前
+      watcher实例,并执行getter(),getter()的执行会引发读取的该属性的get(),从而上面get函数中的
+      if (Dep.target)判断成立,触发判断中的方法,最后将Dep.target设置为undefined,清空改实例中的
+      依赖收集,在回到getAndInvoke函数中执行后续的步骤,执行完成
+    */
     set: function reactiveSetter (newVal) {
       //读取oldVal
       const value = getter ? getter.call(obj) : val

@@ -256,11 +256,11 @@ export default class Watcher {
    * Will be called by the scheduler.
    */
   run () {
+    //实例时激活状态下才执行
     if (this.active) {
       this.getAndInvoke(this.cb)
     }
   }
-
   getAndInvoke (cb: Function) {
     //对于渲染函数的观察者来说就是重新执行渲染函数
     const value = this.get()
@@ -318,7 +318,9 @@ export default class Watcher {
   /**
    * Remove self from all dependencies' subscriber list.
    */
+  //解除当前观察者对属性的观察
   teardown () {
+    //判断当前实例是否是激活的
     if (this.active) {
       // remove self from vm's watcher list
       // this is a somewhat expensive operation so we skip it
@@ -327,6 +329,7 @@ export default class Watcher {
       if (!this.vm._isBeingDestroyed) {
         remove(this.vm._watchers, this)
       }
+      //获取该实例中保存的所有Dep实例,在所有Dep实例中移除该实例，然后将这个实例关闭(也就是不激活)
       let i = this.deps.length
       while (i--) {
         this.deps[i].removeSub(this)

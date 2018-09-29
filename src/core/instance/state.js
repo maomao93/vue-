@@ -447,6 +447,17 @@ export function stateMixin (Vue: Class<Component>) {
     options = options || {}
     options.user = true
     //生成一个Watcher实例
+    /*
+      如果expOrFn是一个函数比如
+        this.$watch(function () {
+          return this.k
+        }, () => {console.log(333)}, {
+          immediate: true
+        })
+      这个时候创建实例的时候回执行这个watcher实例的get(),读取了this.k,这个时候Dep.target是这个watcher
+      实例,那么就把这个watcher实例添加到了私有的Dep中,当this.k改变时会执行所有(Dep中subs数组中)watcher
+      实例的update(),将这些watcher实例放入观察者队列中
+    */
     const watcher = new Watcher(vm, expOrFn, cb, options)
     /*立即执行这个函数*/
     if (options.immediate) {
