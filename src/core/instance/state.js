@@ -255,7 +255,7 @@ function initComputed (vm: Component, computed: Object) {
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
-    //没有定义在实例上,添加描述符(拦截器)并提示警告错误情况
+    /*没有定义在实例上,添加描述符(拦截器)并提示警告错误情况*/
     if (!(key in vm)) {
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
