@@ -22,6 +22,12 @@ let uid = 0
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
  */
+/*
+  计算属性的实现思路，本质上计算属性观察者对象就是一个桥梁，
+  它搭建在响应式数据与渲染函数观察者中间.也就是通过渲染数据的变化，执行notify(),
+  从而执行computedWatcher的update(),重新求值并且执行computedWatcher中dep属性
+  的notify(),也就是去执行渲染函数实例的update()，从而更新界面
+*/
 export default class Watcher {
   vm: Component;
   expression: string;
@@ -90,7 +96,7 @@ export default class Watcher {
     this.cb = cb //回调
     this.id = ++uid // uid for batching
     this.active = true //标识着该观察者实例对象是否是激活状态
-    this.dirty = this.computed // for computed watchers
+    this.dirty = this.computed // true:当前观察者对象没有被求值
     /*
       1、newDepIds 属性用来在一次求值中避免收集重复的观察者
       2、每次求值并收集观察者完成之后会清空 newDepIds 和 newDeps 这两个属性的值，
@@ -293,10 +299,12 @@ export default class Watcher {
    * Evaluate and return the value of the watcher.
    * This only gets called for computed property watchers.
    */
+  /*用来手动求值的*/
   evaluate () {
     //计算属性标识表示只有是计算属性才会执行下面代码
     if (this.dirty) {
       //获取最新值
+      //计算属性会将这自己的watcher实例也添加到
       this.value = this.get()
       //并将标识符设置为false(表示该计算属性只执行这个方法1次)
       this.dirty = false

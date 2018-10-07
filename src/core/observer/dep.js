@@ -61,3 +61,37 @@ export function popTarget () {
   //删除并返回数组的最后一个元素,把(最后一个Watcher实例或undefined)赋值给Dep.target
   Dep.target = targetStack.pop()
 }
+//渲染函数实例
+let a = {
+  deps: [],
+  newDeps: [b.dep]
+}
+//计算属性实例
+let b = {
+  deps: [c],
+  newDeps: [],
+  dep: {
+    subs: [a]
+  }
+}
+
+let c = {
+  subs: [b]
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

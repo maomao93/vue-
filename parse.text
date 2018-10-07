@@ -125,9 +125,18 @@
 
 
 
+-----------------------------------计算属性-----------------------------------------------------
+初始化的时候（渲染函数watcher实例 = A ， 计算属性watcher实例 = B）
+  1、执行B的depend()，这个时候的Dep.target是A，depend()中执行this.dep.depend()，
+    也就是执行B中自带的dep实例中的depend()，这个方法是执行A中的addDep()，也就是往A的
+    newDeps添加B的Dep实例，往B的Dep实例中的subs添加A.
 
-
-
+  2、执行B的evaluate()，这个时候会执行B的get(),get()中会执行pushTarget()，
+    pushTarget()中会将A放入targetStack数组中，并将Dep.target赋值为B,然后执行B的
+    getter()，也就是执行computed中该key的get(),如果该get()中带有观察者属性，那么会
+    往该观察者属性的Dep实例中的subs数组中添加B,并将该观察者属性的Dep实例添加到B的
+    newDeps数组属性中。然后继续执行popTarget()，也就是将Dep.target赋值为A,再次执行
+    B的cleanupDeps(),这个方法就是把newDeps数组中收集的观察者属性放入deps数组中
 
 
 
