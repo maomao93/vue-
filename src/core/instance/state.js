@@ -94,6 +94,12 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      //为props的key属性添加拦截器，改变key值时在非生产环境提示警告
+      /*
+       提示: 这个报错只出现在修改props中key的值时才会出现,但是如果值是对象或者数组时，当
+            你改变的是数组中的某项或这个对象的key值时则不会报这个警告，同时值在父子组件中会同时改变,
+            因为对象和数组的引用特性
+      */
       defineReactive(props, key, value, () => {
         if (vm.$parent && !isUpdatingChildComponent) {
           warn(
@@ -116,7 +122,7 @@ function initProps (vm: Component, propsOptions: Object) {
       proxy(vm, `_props`, key)
     }
   }
-  /*将shouldObserve设置为true*/
+  /*将shouldObserve设置为true,这个值是个开关，表示是否要为值改为观察者属性*/
   toggleObserving(true)
 }
 /*作用: 初始化组件的data,并检测是否与参数中的props和methods冲突*/

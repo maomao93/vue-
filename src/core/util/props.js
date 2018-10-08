@@ -118,8 +118,11 @@ function getPropDefaultValue (vm: ?Component, prop: PropOptions, key: string): a
   }
   // the raw prop value was also undefined from previous render,
   // return previous default value to avoid unnecessary watcher trigger
-  /*存在子组件实例并且父组件传递了props且包含的这个key === undefined
-  && 实例的_prop存在的这个值 !== undefined*/
+  /*
+    存在子组件实例并且父组件传递了props且包含的这个key值 === undefined
+    && 实例的_prop存在的这个值 !== undefined
+    这个判断主要是为组件更新时用的,_props[key]有值但propsData[key]依然没有传递
+  */
   if (vm && vm.$options.propsData &&
     vm.$options.propsData[key] === undefined &&
     vm._props[key] !== undefined
@@ -156,20 +159,32 @@ function assertProp (
     )
     return
   }
-  //值为空或undefined && 不是必须传递的直接return
+  //值为null或undefined && 不是必须传递的直接return
   if (value == null && !prop.required) {
     return
   }
   let type = prop.type //获取类型
-  let valid = !type || type === true //类型为空或者类型为true
+  /*
+    type定义了
+      1、不为true则valid为false
+      2、为true则valid为true
+    type没有定义则valid为true
+  */
+  let valid = !type || type === true
   const expectedTypes = []
   //下面处理的是写了prop.type的(排除了null和undefined)
   if (type) {
-    //不为数组时设置type为数组并且默认第一个为prop.type
+    //不为数组时将type当做项变成数组
     if (!Array.isArray(type)) {
       type = [type]
     }
-    //循环直到父组件传递的值与子组件prop想要的类型相同
+    //循环直到父组件传递的值与子组件prop想要的类型相同，符合就退出循环
+    /*
+      {
+        expectedType: 'String', //传递的值的类型
+        valid: true //是否符合子组件的要求
+      }
+    */
     for (let i = 0; i < type.length && !valid; i++) {
       const assertedType = assertType(value, type[i])
       expectedTypes.push(assertedType.expectedType || '')
