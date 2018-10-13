@@ -31,12 +31,15 @@ export const isSVG = makeMap(
   true
 )
 
+//判断标签名是否是pre
 export const isPreTag = (tag: ?string): boolean => tag === 'pre'
 
+//判断标签是否是保留的标签,html或者svg标签
 export const isReservedTag = (tag: string): ?boolean => {
   return isHTMLTag(tag) || isSVG(tag)
 }
 
+//判断标签名是svg标签返回svg字符串, 是math标签返回 math字符串
 export function getTagNamespace (tag: string): ?string {
   if (isSVG(tag)) {
     return 'svg'
@@ -48,6 +51,7 @@ export function getTagNamespace (tag: string): ?string {
   }
 }
 
+//创建一个原型链为空的对象
 const unknownElementCache = Object.create(null)
 export function isUnknownElement (tag: string): boolean {
   /* istanbul ignore if */

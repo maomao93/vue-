@@ -7,6 +7,7 @@ export function baseWarn (msg: string) {
   console.error(`[Vue compiler]: ${msg}`)
 }
 
+//判断参数modules是否存在，并且返回各项m[key]不为空的数组或空数组
 export function pluckModuleFunction<F: Function> (
   modules: ?Array<Object>,
   key: string

@@ -65,26 +65,35 @@ export function parse (
   template: string,
   options: CompilerOptions
 ): ASTElement | void {
+  //获取错误提示函数或默认的错误提示函数
   warn = options.warn || baseWarn
-
+  //缓存(判断tag是否是pre的函数)或(返回值为false的空函数)
   platformIsPreTag = options.isPreTag || no
+  //缓存mustUseProp函数或(返回值为false的空函数)
   platformMustUseProp = options.mustUseProp || no
+  //缓存getTagNamespace函数或(返回值为false的空函数)
   platformGetTagNamespace = options.getTagNamespace || no
 
+  //缓存modules中各个transformNode函数数组
   transforms = pluckModuleFunction(options.modules, 'transformNode')
+  //缓存modules中各个preTransformNode函数数组
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
+  //缓存modules中各个postTransformNode函数数组
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
 
+  //缓存options.delimiters
   delimiters = options.delimiters
 
+  //生成一个空数组stack
   const stack = []
+  //判断options.preserveWhitespace是否全不等 false 并缓存结果(weex下preserveWhitespace才为false)
   const preserveWhitespace = options.preserveWhitespace !== false
   let root
   let currentParent
   let inVPre = false
   let inPre = false
   let warned = false
-
+  //执行一次错误提示
   function warnOnce (msg) {
     if (!warned) {
       warned = true
@@ -94,13 +103,16 @@ export function parse (
 
   function closeElement (element) {
     // check pre state
+    //判断节点是否存在pre属性
     if (element.pre) {
       inVPre = false
     }
+    //判断节点名是否为pre
     if (platformIsPreTag(element.tag)) {
       inPre = false
     }
     // apply post-transforms
+    //执行postTransforms数组中的所有postTransformNode函数
     for (let i = 0; i < postTransforms.length; i++) {
       postTransforms[i](element, options)
     }
