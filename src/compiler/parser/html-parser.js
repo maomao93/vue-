@@ -251,7 +251,7 @@ export function parseHTML (html, options) {
 
   // Clean up any remaining tags
   parseEndTag()
-
+  //截取字符串
   function advance (n) {
     index += n
     html = html.substring(n)
@@ -333,21 +333,25 @@ export function parseHTML (html, options) {
       }
       //缓存属性的值
       const value = args[3] || args[4] || args[5] || ''
+      //当标签名为a并且有href属性时，判断是否将特殊字符转义了  不为时也判断是否将特殊字符转义了
       const shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
         ? options.shouldDecodeNewlinesForHref
         : options.shouldDecodeNewlines
       attrs[i] = {
-        name: args[1],
-        value: decodeAttr(value, shouldDecodeNewlines)
+        name: args[1],//缓存标签名
+        value: decodeAttr(value, shouldDecodeNewlines) //如果转义了字符则将转义了的字符还原并缓存属性值
       }
     }
-
+    //不是一元标签或不存在/结束标识符时
     if (!unary) {
+      //将节点的信息放入stack数组中
       stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs })
+      //将该标签名赋值给lastTag变量
       lastTag = tagName
     }
-
+    //判断参数中是否有start属性
     if (options.start) {
+
       options.start(tagName, attrs, unary, match.start, match.end)
     }
   }

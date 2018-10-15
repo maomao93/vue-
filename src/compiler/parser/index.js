@@ -43,18 +43,19 @@ let platformGetTagNamespace
 
 type Attr = { name: string; value: string };
 
+//创建AST树
 export function createASTElement (
   tag: string,
   attrs: Array<Attr>,
   parent: ASTElement | void
 ): ASTElement {
   return {
-    type: 1,
-    tag,
-    attrsList: attrs,
-    attrsMap: makeAttrsMap(attrs),
-    parent,
-    children: []
+    type: 1, //标签类型
+    tag, //标签名
+    attrsList: attrs, //属性数组集合
+    attrsMap: makeAttrsMap(attrs), //key:value对象
+    parent, //当前元素的父元素
+    children: [] //空的子元素集合
   }
 }
 
@@ -129,16 +130,22 @@ export function parse (
     start (tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
+
+      //判断 当前currentParent是否存在并且存在ns属性  或者 当前标签名是否是svg或math
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       // handle IE svg bug
       /* istanbul ignore if */
+      //当浏览器为IE并且标签名为svg时
       if (isIE && ns === 'svg') {
+        //将处理过后的属性数组重新赋值给attrs数组
         attrs = guardIESVGBug(attrs)
       }
-
+      //创建AST树
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
+      //判断ns是否存在或未true
       if (ns) {
+        //将ns属性添加到当前AST树对象上
         element.ns = ns
       }
 
@@ -625,6 +632,7 @@ function parseModifiers (name: string): Object | void {
   }
 }
 
+//生成一个属性对应属性值的object对象(key:value)
 function makeAttrsMap (attrs: Array<Object>): Object {
   const map = {}
   for (let i = 0, l = attrs.length; i < l; i++) {
@@ -658,9 +666,13 @@ const ieNSBug = /^xmlns:NS\d+/
 const ieNSPrefix = /^NS\d+:/
 
 /* istanbul ignore next */
+/*处理IE下svg信息的bug*/
 function guardIESVGBug (attrs) {
+  //创建res数组
   const res = []
+  //循环标签属性
   for (let i = 0; i < attrs.length; i++) {
+    //缓存处理过后的属性信息
     const attr = attrs[i]
     if (!ieNSBug.test(attr.name)) {
       attr.name = attr.name.replace(ieNSPrefix, '')

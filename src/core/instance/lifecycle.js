@@ -217,7 +217,6 @@ export function mountComponent (
       vm._update(vm._render(), hydrating)
     }
   }
-
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
@@ -229,7 +228,6 @@ export function mountComponent (
     }
   }, true /* isRenderWatcher */)
   hydrating = false
-
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {

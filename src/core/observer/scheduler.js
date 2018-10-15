@@ -24,11 +24,14 @@ let index = 0
  * Reset the scheduler's state.
  */
 function resetSchedulerState () {
+  //初始化queue数组和activatedChildren数组，并将index下标初始化
   index = queue.length = activatedChildren.length = 0
+  //清空watch队列
   has = {}
   if (process.env.NODE_ENV !== 'production') {
     circular = {}
   }
+  //避免重复执行nextTick()控制变量关闭，队列执行更新的标识符改为false
   waiting = flushing = false
 }
 
@@ -84,12 +87,15 @@ function flushSchedulerQueue () {
 
   // keep copies of post queues before resetting state
   const activatedQueue = activatedChildren.slice()
+  //缓存watch列表
   const updatedQueue = queue.slice()
 
+  //初始化一些控制变量
   resetSchedulerState()
 
   // call component updated and activated hooks
   callActivatedHooks(activatedQueue)
+  //执行组件option中的updated函数
   callUpdatedHooks(updatedQueue)
 
   // devtool hook
@@ -101,9 +107,13 @@ function flushSchedulerQueue () {
 
 function callUpdatedHooks (queue) {
   let i = queue.length
+  //循环队列中的watch实例
   while (i--) {
+    //缓存当前watch实例
     const watcher = queue[i]
+    //缓存当前watch的组件实例
     const vm = watcher.vm
+    //watcher实例是渲染函数的实例并且挂载成功执行updated生命钩子
     if (vm._watcher === watcher && vm._isMounted) {
       callHook(vm, 'updated')
     }
