@@ -148,9 +148,11 @@ export function parse (
         //将ns属性添加到当前AST树对象上
         element.ns = ns
       }
-
+      //判断是(服务端)并且是style标签或者script标签
       if (isForbiddenTag(element) && !isServerRendering()) {
+        //将forbidden属性添加到element对象上
         element.forbidden = true
+        //在非生产环境下提示错误
         process.env.NODE_ENV !== 'production' && warn(
           'Templates should only be responsible for mapping the state to the ' +
           'UI. Avoid placing tags with side-effects in your templates, such as ' +
@@ -365,10 +367,14 @@ function processRef (el) {
   }
 }
 
+// 作用: 解析v-for属性值，并将其解析过的值信息合并到AST树对象中，错误的写法将会在非生产环境下提示警告无效的v-for表达式
 export function processFor (el: ASTElement) {
   let exp
+  //获取v-for属性值并判断是否存在值并将attrsList中该属性的信息(前提存在该属性)
   if ((exp = getAndRemoveAttr(el, 'v-for'))) {
+    //解析v-for属性值并缓存解析过的值信息输出
     const res = parseFor(exp)
+    // 属性值的书写格式正确时将解析过的值信息res合并到AST树对象中否则警告提示表达式有问题
     if (res) {
       extend(el, res)
     } else if (process.env.NODE_ENV !== 'production') {
@@ -386,22 +392,36 @@ type ForParseResult = {
   iterator2?: string;
 };
 
+//作用: 解析v-for的属性值并将解析过的值信息输出
 export function parseFor (exp: string): ?ForParseResult {
+  // 方便解析: const forAliasRE = /([^]*?)\s+(?:in|of)\s+([^]*)/
   const inMatch = exp.match(forAliasRE)
+  //不存在in或for直接return
   if (!inMatch) return
   const res = {}
+  //(?:in|of)这个是不会被捕获的所以inMatch[2]就是被循环的数据
   res.for = inMatch[2].trim()
+  // 方便解析: const stripParensRE = /^\(|\)$/g ('\('或'\)'的意思)
+  // 获取(为开头后面的字符或者)结尾前面的字符
   const alias = inMatch[1].trim().replace(stripParensRE, '')
+  // 方便解析: const forIteratorRE = /,([^,\}\]]*)(?:,([^,\}\]]*))?$/
   const iteratorMatch = alias.match(forIteratorRE)
+  // 判断是否有匹配的值
   if (iteratorMatch) {
+    // 获取,前面的字符串赋值给res.alias
     res.alias = alias.replace(forIteratorRE, '')
+    // 将,后面的字符串赋值给res.iterator1
     res.iterator1 = iteratorMatch[1].trim()
+    // 判断是否存在第二个,
     if (iteratorMatch[2]) {
+      // 将第二个,后面的字符串赋值给res.iterator2
       res.iterator2 = iteratorMatch[2].trim()
     }
   } else {
+    //没有,则将in前面的字符串赋值给res.alias
     res.alias = alias
   }
+  //输出解析后的v-for属性信息
   return res
 }
 
@@ -652,6 +672,7 @@ function isTextTag (el): boolean {
   return el.tag === 'script' || el.tag === 'style'
 }
 
+//判断标签名是否是style或script
 function isForbiddenTag (el): boolean {
   return (
     el.tag === 'style' ||

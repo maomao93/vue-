@@ -24,28 +24,42 @@ import {
 } from 'compiler/parser/index'
 
 function preTransformNode (el: ASTElement, options: CompilerOptions) {
+  //el: ast树对象  options: 开发者定义的option和默认的option合并过后的option
+
+  //当标签名为input时
   if (el.tag === 'input') {
+    //缓存key:val映射对象attrsMap
     const map = el.attrsMap
+    //不存在v-model属性时终止函数执行
     if (!map['v-model']) {
       return
     }
-
+    //创建typeBinding变量
     let typeBinding
+    //当存在:type属性或者v-bind:type属性时
     if (map[':type'] || map['v-bind:type']) {
+      //获取动态type属性值或静态type属性值或函数表达式
       typeBinding = getBindingAttr(el, 'type')
     }
+    //没有设置静态属性type的值 && 不存在:type属性或者v-bind:type属性 && 存在v-bind属性时，获取v-bind属性值中的type属性赋值给typeBinding
     if (!map.type && !typeBinding && map['v-bind']) {
       typeBinding = `(${map['v-bind']}).type`
     }
-
+    //typeBinding存在值时
     if (typeBinding) {
+      //获取v-if的属性值并删除attrsMap和attrsList中该属性的信息(前提存在的该属性)
       const ifCondition = getAndRemoveAttr(el, 'v-if', true)
+      //将ifCondition的值合并成字符串
       const ifConditionExtra = ifCondition ? `&&(${ifCondition})` : ``
+      //获取v-else的属性值并删除attrsMap和attrsList中该属性的信息(前提存在的该属性) 再判断值是否 != null
       const hasElse = getAndRemoveAttr(el, 'v-else', true) != null
+      //获取v-else-if的属性值并删除attrsMap和attrsList中该属性的信息(前提存在的该属性)
       const elseIfCondition = getAndRemoveAttr(el, 'v-else-if', true)
       // 1. checkbox
+      // 克隆一个AST树对象
       const branch0 = cloneASTElement(el)
       // process for on the main node
+      //处理v-for属性值并在错误的写法时提示错误信息
       processFor(branch0)
       addRawAttr(branch0, 'type', 'checkbox')
       processElement(branch0, options)
@@ -85,6 +99,7 @@ function preTransformNode (el: ASTElement, options: CompilerOptions) {
   }
 }
 
+//克隆一个AST树对象
 function cloneASTElement (el) {
   return createASTElement(el.tag, el.attrsList.slice(), el.parent)
 }
