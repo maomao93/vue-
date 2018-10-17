@@ -20,7 +20,7 @@ import { isNonPhrasingTag } from 'web/compiler/util'
   //           或者 (' 非'字符串任意个 '至少一个) 或 (不为 不可见字符 " ' = < > 至少一个))) 前面的表达式最多一次
   匹配标签的属性(attributes)的
   class="some-class"、class='some-class'、class=some-class、disabled这几种
-*/
+*/  // /^<\\/((?:[a-zA-Z_][\\w\\-\\.]*\\:)?[a-zA-Z_][\\w\\-\\.]*)[^>]*>/
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 // could use https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-QName
 // but for Vue templates we can enforce a simple charset
@@ -147,15 +147,16 @@ export function parseHTML (html, options) {
         }
 
         // End tag:
-        //解析结束标签
-        /*   ^<(    (?:[a-zA-Z_][\\w\\-\\.]*\\:)?    [a-zA-Z_][\\w\\-\\.]* )     */
+        //解析结束标签(必须以</开头的字符串，所以会先解析开始标签)
+        /*   ^<\\/((?:[a-zA-Z_][\\w\\-\\.]*\\:)?[a-zA-Z_][\\w\\-\\.]*)     */
         const endTagMatch = html.match(endTag)//[<]
         //存在结束标签 比如: </div> </kk:a-c>
         if (endTagMatch) {
           //缓存起始下标
           const curIndex = index
-          //获取结束标签后面的字符串，并且将起始下标跟新
+          //获取结束标签后面的字符串，并且将起始下标更新
           advance(endTagMatch[0].length)
+          //开始解析结束标签信息(正则捕获的标签名, 起始下标, 结束标签后面那个字符的下标)
           parseEndTag(endTagMatch[1], curIndex, index)
           continue
         }
@@ -181,17 +182,26 @@ export function parseHTML (html, options) {
         const startTagMatch = parseStartTag()
         //存在开始标签
         if (startTagMatch) {
+          //进一步处理起始标签的信息
           handleStartTag(startTagMatch)
+          //lastTag存在&&lastTag不为pre,textarea标签&&html模板第一个字符是'\n'字符时
           if (shouldIgnoreFirstNewline(lastTag, html)) {
+            //截取'\n'后面的字符串
             advance(1)
           }
+          //进行下一个循环
           continue
         }
       }
 
       let text, rest, next
+      //
       if (textEnd >= 0) {
+        //缓存<字符后面的模板字符(包括<)
         rest = html.slice(textEnd)
+        // let m = /[a-zA-Z_][\w\-\.]*/
+        //模板字符开头不是</m && 模板字符开头不是<m(比如'<(') && 模板字符开头不是<!-- && 模板字符开头不是<![ 时进入循环
+        //<存在于普通文本中,类似这种情况'<(<(<(wer<(',以下循环的作用: 将rest更新为最后一个<(包括<)的模板字符串,并将textEnd更新为最后一个<的下标
         while (
           !endTag.test(rest) &&
           !startTagOpen.test(rest) &&
@@ -199,34 +209,51 @@ export function parseHTML (html, options) {
           !conditionalComment.test(rest)
         ) {
           // < in plain text, be forgiving and treat it as text
+          /* 从第二个字符开始查询'<'并返回位置(因为第一个是<)*/
           next = rest.indexOf('<', 1)
+          //没有找到<时退出循环
           if (next < 0) break
+          //找到<时,将textEnd下标更新为<后面第一个<的位置
           textEnd += next
+          //将模板字符更新为<后面第一个<(包括<)的模板字符串
           rest = html.slice(textEnd)
         }
+        //缓存最后一个<前面的字符
         text = html.substring(0, textEnd)
+        //将模板字符更新为最后一个<后面的字符(包括<)
         advance(textEnd)
       }
-
+      //模板字符串不存在<时,将模板字符串缓存给text并且将模板字符串设置为''
       if (textEnd < 0) {
         text = html
         html = ''
       }
-
+      //当存在不合格的根元素时或纯文本模板时提示不同的错误信息
       if (options.chars && text) {
         options.chars(text)
       }
     } else {
+      // lastTag不为空(有未闭合的标签) && 标签为script,style,textarea 时
       let endTagLength = 0
+      // 缓存lastTag标签
       const stackedTag = lastTag.toLowerCase()
+      // 获取reCache对象中stackedTag属性值 || 正则表达式
       const reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'))
       const rest = html.replace(reStackedTag, function (all, text, endTag) {
+        /*
+            all: 完全匹配的值
+            text: 第一个捕获值
+            endTag: 第二个捕获值
+        */
+        //获取endTag字符的长度
         endTagLength = endTag.length
+        //标签不为script,style,textarea,noscript
         if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
           text = text
             .replace(/<!\--([\s\S]*?)-->/g, '$1') // #7298
             .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1')
         }
+        // stackedTag存在&&stackedTag不为pre,textarea标签&&捕获字符text第一个字符是'\n'字符时将'\n'字符去掉
         if (shouldIgnoreFirstNewline(stackedTag, text)) {
           text = text.slice(1)
         }
@@ -239,7 +266,7 @@ export function parseHTML (html, options) {
       html = rest
       parseEndTag(stackedTag, index - endTagLength, index)
     }
-
+    //纯文本或不合格的标签提示错误信息: 字符串的结尾不符合标签格式(还需理解)
     if (html === last) {
       options.chars && options.chars(html)
       if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {
@@ -256,7 +283,7 @@ export function parseHTML (html, options) {
     index += n
     html = html.substring(n)
   }
-  //解析起始标签
+  //解析起始标签(读取标签中的属性并保存)
   function parseStartTag () {
     /*const ncname = '[a-zA-Z_][\\w\\-\\.]*'
     const qnameCapture = `((?:${ncname}\\:)?${ncname})`
@@ -298,7 +325,12 @@ export function parseHTML (html, options) {
       }
     }
   }
-
+  /*
+    作用:
+          1、当上一个起始标签为p并且当前起始标标签是类似于div这种非段落式标签时进行特殊处理
+          2、循环处理标签的属性值
+          3、将不是一元标签或不存在/结束标识符的起始标签放入stack数组
+  */
   function handleStartTag (match) {
     //缓存开始标签名
     const tagName = match.tagName
@@ -306,10 +338,13 @@ export function parseHTML (html, options) {
     const unarySlash = match.unarySlash
     //这个默认传递的是true
     if (expectHTML) {
+      //判断lastTag(上一个起始标签)是否是p元素，当前标签不是段落式内容模型类似div这些
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
         parseEndTag(lastTag)
       }
+      /*检测一个标签是否是(那些虽然不是一元标签，但却可以自己补全并闭合的标签) && lastTag === 当前标签名 (比如: <p><p>)*/
       if (canBeLeftOpenTag(tagName) && lastTag === tagName) {
+        //解析当前节点
         parseEndTag(tagName)
       }
     }
@@ -351,22 +386,31 @@ export function parseHTML (html, options) {
     }
     //判断参数中是否有start属性
     if (options.start) {
-
       options.start(tagName, attrs, unary, match.start, match.end)
     }
   }
   //解析结束标签
+  /*
+    作用:
+          1、检测是否缺少闭合标签
+          2、处理 stack 栈中剩余的标签
+          3、解析 </br> 与 </p> 标签，与浏览器的行为相同
+  */
   function parseEndTag (tagName, start, end) {
     let pos, lowerCasedTagName
     if (start == null) start = index
     if (end == null) end = index
-
+    //标签名传递时
     if (tagName) {
+      //缓存标签名
       lowerCasedTagName = tagName.toLowerCase()
     }
 
     // Find the closest opened tag of the same type
+
+    //标标签名传递时
     if (tagName) {
+      //从栈顶到栈底的循环，找到与传进来的标签名参数相同的标签名
       for (pos = stack.length - 1; pos >= 0; pos--) {
         if (stack[pos].lowerCasedTag === lowerCasedTagName) {
           break
@@ -376,9 +420,11 @@ export function parseHTML (html, options) {
       // If no tag name is provided, clean shop
       pos = 0
     }
-
+    //在stack数组中的找到了标签名或未传标签名参数
     if (pos >= 0) {
+      /*比如: (<p><div>) 、 (<p><p>)这些就会补全标签名*/
       // Close all the open elements, up the stack
+      /*从栈顶到栈底循环stack数组,当传进来的标签tagName不是在数组stack的尾部则进行警告提示表示少闭合标签*/
       for (let i = stack.length - 1; i >= pos; i--) {
         if (process.env.NODE_ENV !== 'production' &&
           (i > pos || !tagName) &&
@@ -388,22 +434,27 @@ export function parseHTML (html, options) {
             `tag <${stack[i].tag}> has no matching end tag.`
           )
         }
+        //存在end属性时将该标签闭合
         if (options.end) {
           options.end(stack[i].tag, start, end)
         }
       }
-
       // Remove the open elements from the stack
-      stack.length = pos
-      lastTag = pos && stack[pos - 1].tag
-    } else if (lowerCasedTagName === 'br') {
+      stack.length = pos //更新stack数组，删除在stack数组的该项标签信息(包括该下标后面的前提存在的话)
+      lastTag = pos && stack[pos - 1].tag //将lastTag更新为改标签的前一个起始标签
+    }
+    /*以下情况一般为在解析闭合开关时才会出现的情况*/
+    else if (lowerCasedTagName === 'br') {
+      //不存在stack数组中并且标签名为br时
       if (options.start) {
         options.start(tagName, [], true, start, end)
       }
     } else if (lowerCasedTagName === 'p') {
+      //不存在stack数组中并且标签名为p时
       if (options.start) {
         options.start(tagName, [], false, start, end)
       }
+      //将p标签闭合
       if (options.end) {
         options.end(tagName, start, end)
       }

@@ -244,7 +244,10 @@ export function parse (
 
     end () {
       // remove trailing whitespace
+
+      //缓存栈顶的标签信息
       const element = stack[stack.length - 1]
+      //
       const lastNode = element.children[element.children.length - 1]
       if (lastNode && lastNode.type === 3 && lastNode.text === ' ' && !inPre) {
         element.children.pop()
@@ -254,15 +257,22 @@ export function parse (
       currentParent = stack[stack.length - 1]
       closeElement(element)
     },
-
+    /*
+      作用:
+            1、纯文本的template提示错误信息缺少根元素
+            2、不合格的根元素提示将会被忽略根元素外的文本内容
+    */
     chars (text: string) {
+      //不存在父元素时
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
+            //在非生产环境下,text参数等于模板字符串时，提示缺少根元素
             warnOnce(
               'Component template requires a root element, rather than just text.'
             )
           } else if ((text = text.trim())) {
+            //在非生产环境下,text参数去除左右空格后，提示根元素之外的文本text参数将被忽略
             warnOnce(
               `text "${text}" outside root element will be ignored.`
             )

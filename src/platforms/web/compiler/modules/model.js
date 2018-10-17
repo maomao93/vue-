@@ -61,6 +61,7 @@ function preTransformNode (el: ASTElement, options: CompilerOptions) {
       // process for on the main node
       //处理v-for属性值并在错误的写法时提示错误信息
       processFor(branch0)
+      //往branch0对象的attrsMap中添加type:checkbox和attrsList中添加{type:type,checkbox:checkbox}
       addRawAttr(branch0, 'type', 'checkbox')
       processElement(branch0, options)
       branch0.processed = true // prevent it from double-processed

@@ -28,6 +28,9 @@ export function addAttr (el: ASTElement, name: string, value: any) {
 }
 
 // add a raw attr (use this in preTransforms)
+/*
+  作用: 将name属性和值添加到AST树对象的attrsMap映射对象中，往attrsList数组中添加改属性信息
+*/
 export function addRawAttr (el: ASTElement, name: string, value: any) {
   el.attrsMap[name] = value
   el.attrsList.push({ name, value })
