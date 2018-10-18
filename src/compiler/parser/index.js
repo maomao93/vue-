@@ -245,15 +245,19 @@ export function parse (
     end () {
       // remove trailing whitespace
 
-      //缓存栈顶的标签信息
+      // 缓存栈顶的标签信息
       const element = stack[stack.length - 1]
-      //
+      // 获取该标签信息最后一个子元素的信息
       const lastNode = element.children[element.children.length - 1]
+      // 存在子信息&&是文本信息&&是空格字符&&不是pre标签
       if (lastNode && lastNode.type === 3 && lastNode.text === ' ' && !inPre) {
+        //移除最后一个子标签
         element.children.pop()
       }
       // pop stack
+      // 将该标签信息从stack数组中删除
       stack.length -= 1
+      // 当前父元素设置为stack数组中最后一个标签信息
       currentParent = stack[stack.length - 1]
       closeElement(element)
     },
@@ -310,6 +314,7 @@ export function parse (
         }
       }
     },
+    /*参数的值为注释节点的内容*/
     comment (text: string) {
       currentParent.children.push({
         type: 3,

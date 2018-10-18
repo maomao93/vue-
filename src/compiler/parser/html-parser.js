@@ -237,7 +237,7 @@ export function parseHTML (html, options) {
       let endTagLength = 0
       // 缓存lastTag标签
       const stackedTag = lastTag.toLowerCase()
-      // 获取reCache对象中stackedTag属性值 || 正则表达式
+      // 获取reCache对象中stackedTag属性值 || 正则表达式 作用: 用来匹配纯文本标签的内容以及结束标签的
       const reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'))
       const rest = html.replace(reStackedTag, function (all, text, endTag) {
         /*
@@ -262,8 +262,11 @@ export function parseHTML (html, options) {
         }
         return ''
       })
+      // 更新初始下标index(原模板字符 - 原模板字符去除(与reStackedTag正则匹配的字符 前提匹配成功) = 0 || 与reStackedTag正则匹配的字符的长度)
       index += html.length - rest.length
+      // 更新模板字符串(去除reStackedTag正则匹配后的字符)
       html = rest
+      // 参数: 纯文本标签(script,style,textarea)  初始标签<的位置 || 结束标签</的位置 初始标签>的位置 || 结束标签>的位置
       parseEndTag(stackedTag, index - endTagLength, index)
     }
     //纯文本或不合格的标签提示错误信息: 字符串的结尾不符合标签格式(还需理解)
@@ -440,8 +443,8 @@ export function parseHTML (html, options) {
         }
       }
       // Remove the open elements from the stack
-      stack.length = pos //更新stack数组，删除在stack数组的该项标签信息(包括该下标后面的前提存在的话)
-      lastTag = pos && stack[pos - 1].tag //将lastTag更新为改标签的前一个起始标签
+      stack.length = pos // 更新stack数组，删除在stack数组的该项标签信息(包括该下标后面的前提存在的话)
+      lastTag = pos && stack[pos - 1].tag // 将lastTag更新为改标签的前一个起始标签
     }
     /*以下情况一般为在解析闭合开关时才会出现的情况*/
     else if (lowerCasedTagName === 'br') {
