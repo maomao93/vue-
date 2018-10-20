@@ -3,7 +3,11 @@
 const validDivisionCharRE = /[\w).+\-_$\]]/
 
 /*
-  作用: 将属性值进行解析有非短路|运算符时转换成函数表达式 否则返回原属性值字符串
+  作用:
+        1、解析过滤器的函数
+        2、将过滤器从表达式中分解出来
+        3、将过滤器和属性值通过wrapFilter函数拼接成_f函数并输出该函数
+        4、没有过滤器时将表达式直接输出
 */
 export function parseFilters (exp: string): string {
   let inSingle = false
@@ -119,7 +123,11 @@ export function parseFilters (exp: string): string {
   return expression
 }
 
-//将非短路|运算符左右的字符串解析转成函数表达式
+/*
+    作用:
+          1、解析过滤器
+          2、将过滤器和属性值变成_f("filter")(exp)或者_f("filter")(exp, filter方法中的参数)
+*/
 function wrapFilter (exp: string, filter: string): string {
   //判断是否有(字符
   const i = filter.indexOf('(')
@@ -128,10 +136,11 @@ function wrapFilter (exp: string, filter: string): string {
     // _f: resolveFilter
     return `_f("${filter}")(${exp})`
   } else {
-    //获取(字符前面的字符串
+    //获取过滤器(字符前面的字符串
     const name = filter.slice(0, i)
-    //获取(字符后面的字符串
+    //获取过滤器(字符后面的字符串
     const args = filter.slice(i + 1)
+    //比如add(1)会变成   `_f("add")(${exp},1)`
     return `_f("${name}")(${exp}${args !== ')' ? ',' + args : args}`
   }
 }
