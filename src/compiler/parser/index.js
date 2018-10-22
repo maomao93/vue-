@@ -326,6 +326,9 @@ export function parse (
   return root
 }
 
+/*
+    作用: 节点存在v-pre属性时设置el.pre为true
+*/
 function processPre (el) {
   if (getAndRemoveAttr(el, 'v-pre') != null) {
     el.pre = true
@@ -504,9 +507,22 @@ function processOnce (el) {
     el.once = true
   }
 }
+/*
+    作用:
+          1、当标签名为slot时获取name或:name或v-bind:name属性值
+          2、当标签名不为slot时
+              1、当标签名为template时获取scope属性值或slot-scope属性值,并在生产环境下并且不存在scope属性值时提示警告
+              2、当标签名不为template时并且slot-scope属性值存在时缓存slotScope属性值。在非生产环境下 && 标签存在v-for属性时提示警告
+          3、当标签名不为slot时获取节点的slot属性，当属性值存在时添加el.slotTarget属性值为"default"或属性值。当标签名不为template
+             && 不存在slot-scope属性值时，往标签对象的attrs数组中添加保存slot属性信息的对象
+    总结: 获取slot节点的name属性值添加为el.slotName或者 (获取template节点的scope属性值 || slot-scope属性值)为el.slotScope
+          或者获取非(template、slot)节点的slot-scope属性值为el.slotScope  获取非(slot)节点的slot属性添加为el.slotTarget
 
+*/
 function processSlot (el) {
+  //当标签名为slot时
   if (el.tag === 'slot') {
+    //获取标签的name属性或:name属性或v-bind:name属性
     el.slotName = getBindingAttr(el, 'name')
     if (process.env.NODE_ENV !== 'production' && el.key) {
       warn(
@@ -517,7 +533,9 @@ function processSlot (el) {
     }
   } else {
     let slotScope
+    // 当标签名为template时
     if (el.tag === 'template') {
+      // 获取标签的scope属性值
       slotScope = getAndRemoveAttr(el, 'scope')
       /* istanbul ignore if */
       if (process.env.NODE_ENV !== 'production' && slotScope) {
@@ -529,9 +547,11 @@ function processSlot (el) {
           true
         )
       }
+      // 当scope属性值不存在时获取slot-scope属性值
       el.slotScope = slotScope || getAndRemoveAttr(el, 'slot-scope')
     } else if ((slotScope = getAndRemoveAttr(el, 'slot-scope'))) {
       /* istanbul ignore if */
+      // 在非生产环境下 && 标签存在v-for属性时 提示警告使用template更清晰
       if (process.env.NODE_ENV !== 'production' && el.attrsMap['v-for']) {
         warn(
           `Ambiguous combined usage of slot-scope and v-for on <${el.tag}> ` +
@@ -542,11 +562,15 @@ function processSlot (el) {
       }
       el.slotScope = slotScope
     }
+    // 获取标签的:slot属性值或v-bind:slot属性值都不存在时则获取slot属性值
     const slotTarget = getBindingAttr(el, 'slot')
+    // 当值不存在时
     if (slotTarget) {
+      // 当值为空字符串时  将el.slotTarget赋值为"default"字符串 否则赋值slot属性值
       el.slotTarget = slotTarget === '""' ? '"default"' : slotTarget
       // preserve slot as an attribute for native shadow DOM compat
       // only for non-scoped slots.
+      /* 当标签名为template时 && 不存在slot-scope属性值时往标签的attrs数组中添加保存slot属性信息的对象*/
       if (el.tag !== 'template' && !el.slotScope) {
         addAttr(el, 'slot', slotTarget)
       }
@@ -554,6 +578,11 @@ function processSlot (el) {
   }
 }
 
+/*
+  作用:
+        1、添加el.component属性值为节点的:is或is属性值(前提有值)
+        2、添加el.inlineTemplate属性值为true(前提节点存在inline-template属性)
+*/
 function processComponent (el) {
   let binding
   if ((binding = getBindingAttr(el, 'is'))) {

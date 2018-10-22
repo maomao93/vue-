@@ -8,9 +8,13 @@ import {
 } from 'compiler/helpers'
 
 function transformNode (el: ASTElement, options: CompilerOptions) {
+  //获取默认的警告提示方法
   const warn = options.warn || baseWarn
+  // 获取class属性值
   const staticClass = getAndRemoveAttr(el, 'class')
+  // 非生产环境 && 不存在class属性值时
   if (process.env.NODE_ENV !== 'production' && staticClass) {
+    //
     const res = parseText(staticClass, options.delimiters)
     if (res) {
       warn(
