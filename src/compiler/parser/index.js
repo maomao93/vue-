@@ -594,49 +594,77 @@ function processComponent (el) {
 }
 
 function processAttrs (el) {
+  // 缓存节点的属性列表信息
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, isProp
+  // 循环属性列表信息
   for (i = 0, l = list.length; i < l; i++) {
+    // 缓存属性名
     name = rawName = list[i].name
+    // 缓存属性值
     value = list[i].value
+    // 该属性是指令(v-、@、:)
     if (dirRE.test(name)) {
-      // mark element as dynamic
+      // mark element as dynamic 将属性值标记为动态
       el.hasBindings = true
-      // modifiers
+      // modifiers  解析属性名是否存在修饰符并返回undefined或{修饰符: true}
       modifiers = parseModifiers(name)
+      // 存在修饰符时将缓存去除修饰符后的属性名
       if (modifiers) {
         name = name.replace(modifierRE, '')
       }
-      if (bindRE.test(name)) { // v-bind
+      /* 便于理解: const bindRE = /^:|^v-bind:/ */
+      // 当属性为绑定属性时
+      if (bindRE.test(name)) {
+        // v-bind
+        // 缓存去除绑定方法的属性值
         name = name.replace(bindRE, '')
+        // 解析表达式中的过滤器并返回_f函数 或者没有过滤器的表达式
         value = parseFilters(value)
+        // 标识该绑定的属性是否是原生DOM对象的属性
         isProp = false
+        // 存在修饰符时
         if (modifiers) {
+          // prop修饰符
           if (modifiers.prop) {
+            // 表示原生DOM对象的属性
             isProp = true
+            // 将-写法属性名改写成驼峰写法的属性名并缓存
             name = camelize(name)
+            // 将innerHtml换成innerHTML
             if (name === 'innerHtml') name = 'innerHTML'
           }
+          // camel修饰符
           if (modifiers.camel) {
+            // 将-写法属性名改写成驼峰写法的属性名并缓存
             name = camelize(name)
           }
+          // sync修饰符
           if (modifiers.sync) {
             addHandler(
-              el,
-              `update:${camelize(name)}`,
+              el, // 节点描述对象
+              `update:${camelize(name)}`, // 例子: update:addCount
               genAssignmentCode(value, `$event`)
             )
           }
         }
+        // 标识该绑定的属性为原生DOM对象的属性 || (该标签不存在is属性 &&
+        // 满足以下一种: 属性名为value的非button类型的input、属性名为selected的option、属性名为checked的input、属性名为muted的video)
         if (isProp || (
           !el.component && platformMustUseProp(el.tag, el.attrsMap.type, name)
         )) {
+          // 往el的props数组中添加属性信息
           addProp(el, name, value)
         } else {
+          // 往el的attrs数组中添加属性信息
           addAttr(el, name, value)
         }
-      } else if (onRE.test(name)) { // v-on
+      } else if (onRE.test(name)) {
+        // v-on
+        /* 便于理解: const onRE = /^@|^v-on:/ */
+        // 删除@或v-on:后的属性名
         name = name.replace(onRE, '')
+        //
         addHandler(el, name, value, modifiers, false, warn)
       } else { // normal directives
         name = name.replace(dirRE, '')
@@ -652,7 +680,8 @@ function processAttrs (el) {
         }
       }
     } else {
-      // literal attribute
+      // literal attribute 非指令
+      // 非生产环境下
       if (process.env.NODE_ENV !== 'production') {
         const res = parseText(value, delimiters)
         if (res) {
@@ -687,11 +716,22 @@ function checkInFor (el: ASTElement): boolean {
   return false
 }
 
+/*
+  作用:
+        1、检测name字符串是否存在(该正则/\.[^.]+/g字符串)
+        2、当存在时将.后面的字符串变成空对象的属性并且值为true然后将其输出
+*/
 function parseModifiers (name: string): Object | void {
+  /*便于理解: const modifierRE = /\.[^.]+/g */
+  //截取name字符的.后面的字符(包括.)
   const match = name.match(modifierRE)
+  // 存在该字符时
   if (match) {
+    // 初始化ret对象
     const ret = {}
+    // 将.后面的字符设置为ret的属性 属性值为true
     match.forEach(m => { ret[m.slice(1)] = true })
+    // 将ret对象输出
     return ret
   }
 }

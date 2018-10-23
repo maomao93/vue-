@@ -16,12 +16,17 @@ export function pluckModuleFunction<F: Function> (
     ? modules.map(m => m[key]).filter(_ => _)
     : []
 }
-
+/*
+  作用: 往el的props数组中添加属性信息，该数组中添加的是原生dom属性
+*/
 export function addProp (el: ASTElement, name: string, value: string) {
   (el.props || (el.props = [])).push({ name, value })
   el.plain = false
 }
 
+/*
+  作用: 往el的attrs数组中添加属性信息，该数组中添加的是绑定属性
+*/
 export function addAttr (el: ASTElement, name: string, value: any) {
   (el.attrs || (el.attrs = [])).push({ name, value })
   el.plain = false
@@ -49,16 +54,19 @@ export function addDirective (
 }
 
 export function addHandler (
-  el: ASTElement,
-  name: string,
-  value: string,
-  modifiers: ?ASTModifiers,
-  important?: boolean,
-  warn?: Function
+  el: ASTElement, // 当前元素描述对象
+  name: string, // 绑定属性的名字，即事件名称
+  value: string, // 绑定属性的值，这个值有可能是事件回调函数名字，有可能是内联语句，有可能是函数表达式
+  modifiers: ?ASTModifiers,// 修饰符对象
+  important?: boolean,// 代表着添加的事件侦听函数的重要级别
+  warn?: Function // 打印警告信息的函数，是一个可选参数
 ) {
+  // 获取modifiers参数|| 一个冻结的空对象
   modifiers = modifiers || emptyObject
   // warn prevent and passive modifier
   /* istanbul ignore if */
+  // 非生产环境下&&存在警告函数&&存在prevent修饰符&&存在passive修饰符时
+  // 提示开发者 passive 修饰符不能和 prevent 修饰符一起使用
   if (
     process.env.NODE_ENV !== 'production' && warn &&
     modifiers.prevent && modifiers.passive
@@ -70,15 +78,18 @@ export function addHandler (
   }
 
   // check capture modifier
+  // capture修饰符存在时删除capture修饰符并且赋值属性名为!属性名
   if (modifiers.capture) {
     delete modifiers.capture
     name = '!' + name // mark the event as captured
   }
+  // once修饰符存在时删除once修饰符并且赋值属性名为~属性名
   if (modifiers.once) {
     delete modifiers.once
     name = '~' + name // mark the event as once
   }
   /* istanbul ignore if */
+  // passive修饰符存在时删除passive修饰符并且赋值属性名为&属性名
   if (modifiers.passive) {
     delete modifiers.passive
     name = '&' + name // mark the event as passive
@@ -87,37 +98,52 @@ export function addHandler (
   // normalize click.right and click.middle since they don't actually fire
   // this is technically browser-specific, but at least for now browsers are
   // the only target envs that have right/middle clicks.
+  /*属性名为click时*/
   if (name === 'click') {
+    // 存在right修饰符时
     if (modifiers.right) {
+      // 属性名设置为contextmenu
       name = 'contextmenu'
+      // 删除right修饰符
       delete modifiers.right
+      // 存在middle修饰符时
     } else if (modifiers.middle) {
+      // 属性名设置为mouseup
       name = 'mouseup'
     }
   }
 
   let events
+  // 存在native修饰符时缓存el.nativeEvents否则缓存el.events
   if (modifiers.native) {
+    // 删除native修饰符
     delete modifiers.native
+    // 缓存el的nativeEvents || 空对象
     events = el.nativeEvents || (el.nativeEvents = {})
   } else {
+    // 缓存el.events || 空对象
     events = el.events || (el.events = {})
   }
 
   const newHandler: any = {
     value: value.trim()
   }
+  // modifiers参数传递时 缓存modifiers属性到newHandler对象中
   if (modifiers !== emptyObject) {
     newHandler.modifiers = modifiers
   }
-
+  // 缓存events中name属性值
   const handlers = events[name]
   /* istanbul ignore if */
+  // handlers为数组时
   if (Array.isArray(handlers)) {
+    // true? 将newHandler对象存入handlers数组的头部否则尾部
     important ? handlers.unshift(newHandler) : handlers.push(newHandler)
   } else if (handlers) {
+    // events中name属性值存在时
     events[name] = important ? [newHandler, handlers] : [handlers, newHandler]
   } else {
+    // events中name属性值为null 或 nudefined 或 '' 或 0 时设置events[name]为newHandler对象
     events[name] = newHandler
   }
 
