@@ -21,6 +21,7 @@ export function parseText (
   text: string,
   delimiters?: [string, string]
 ): TextParseResult | void {
+  // 纯文本插入分隔符(默认: {{}})用户是否自定义了
   const tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE
   if (!tagRE.test(text)) {
     return

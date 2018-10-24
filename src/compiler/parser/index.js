@@ -664,17 +664,24 @@ function processAttrs (el) {
         /* 便于理解: const onRE = /^@|^v-on:/ */
         // 删除@或v-on:后的属性名
         name = name.replace(onRE, '')
-        //
+        // 解析事件指令并添加到el描述对象中的events属性或nativeEvents属性中
         addHandler(el, name, value, modifiers, false, warn)
       } else { // normal directives
+        // 解析其他指令(比如自定义的指令v-model)
         name = name.replace(dirRE, '')
         // parse arg
+        /* 便于理解: const argRE = /:(.*)$/ */
+        // 获取指令的参数(:参数名)
         const argMatch = name.match(argRE)
+        // 获取指令的参数名
         const arg = argMatch && argMatch[1]
+        // 参数名存在时,获取指令名
         if (arg) {
           name = name.slice(0, -(arg.length + 1))
         }
+        // 将指令信息添加到el.directives数组中
         addDirective(el, name, rawName, value, arg, modifiers)
+        // 非生产环境下 && 指令名为model时
         if (process.env.NODE_ENV !== 'production' && name === 'model') {
           checkForAliasModel(el, value)
         }
@@ -787,9 +794,15 @@ function guardIESVGBug (attrs) {
   return res
 }
 
+/*
+  作用: 检测当前元素或父元素是否存在v-for指令，并且循环的迭代名(比如list参数)当做v-model的属性值时提示警告
+*/
 function checkForAliasModel (el, value) {
+  // 缓存el描述对象
   let _el = el
+  // 当el存在时
   while (_el) {
+    // 节点存在v-for && 循环的参数 === v-model的属性值 提示警告v-model不能绑定为循环的参数
     if (_el.for && _el.alias === value) {
       warn(
         `<${el.tag} v-model="${value}">: ` +
@@ -799,6 +812,7 @@ function checkForAliasModel (el, value) {
         `Consider using an array of objects and use v-model on an object property instead.`
       )
     }
+    // 赋值为节点的父节点进行检测
     _el = _el.parent
   }
 }

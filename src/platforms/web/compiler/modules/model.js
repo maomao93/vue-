@@ -21,9 +21,11 @@ import {
   processElement,
   addIfCondition,
   createASTElement
-} from 'compiler/parser/index'
-
-function preTransformNode (el: ASTElement, options: CompilerOptions) {
+} from 'compiler/parser/index';
+/*
+  作用: 处理input标签并且存在v-model属性以及确定该input类型的表达式最后将该描述对象输出
+*/
+function preTransformNode(el: ASTElement, options: CompilerOptions) {
   //el: ast树对象  options: 开发者定义的option和默认的option合并过后的option
 
   //当标签名为input时
@@ -61,47 +63,64 @@ function preTransformNode (el: ASTElement, options: CompilerOptions) {
       // process for on the main node
       //处理v-for属性值并在错误的写法时提示错误信息
       processFor(branch0)
-      //往branch0对象的attrsMap中添加type:checkbox和attrsList中添加{type:type,checkbox:checkbox}
+      //往branch0对象的attrsMap中添加type:checkbox和attrsList中添加{name:type,value:checkbox}
       addRawAttr(branch0, 'type', 'checkbox')
+      // 对该标签描述对象进行key、ref、Slot、is、inline-template、css、style等等属性处理
       processElement(branch0, options)
+      // 标识为该标签已处理过
       branch0.processed = true // prevent it from double-processed
+      // if属性设置为`(属性值) === checkbox&&`+ 原v-if的属性值
       branch0.if = `(${typeBinding})==='checkbox'` + ifConditionExtra
+      // 往el描述对象中添加ifConditions数组，并往数组中添加(包含if信息)的对象
       addIfCondition(branch0, {
         exp: branch0.if,
         block: branch0
       })
       // 2. add radio else-if condition
+      // 克隆一份全新的el描述对象
       const branch1 = cloneASTElement(el)
+      // 获取v-for属性值并从描述对象的attrList数组和attrsMap对象中删除该属性信息
       getAndRemoveAttr(branch1, 'v-for', true)
+      // 往branch1对象的attrsMap中添加type:radio和attrsList中添加{name:'type',value:'radio'}
       addRawAttr(branch1, 'type', 'radio')
+      // 对该标签描述对象进行key、ref、Slot、is、inline-template、css、style等等属性处理
       processElement(branch1, options)
+      // 往branch0描述对象中的ifConditions数组中添加(判断是否为radio表达式)的对象
       addIfCondition(branch0, {
         exp: `(${typeBinding})==='radio'` + ifConditionExtra,
         block: branch1
       })
       // 3. other
+      // 继续克隆一份el描述对象
       const branch2 = cloneASTElement(el)
+      // 获取v-for属性值并从描述对象的attrList数组和attrsMap对象中删除该属性信息
       getAndRemoveAttr(branch2, 'v-for', true)
+      // 往branch2对象的attrsMap中添加:type:(:type属性值)和attrsList中添加{name:':type',value: 属性值}
       addRawAttr(branch2, ':type', typeBinding)
+      // 对该标签branch2描述对象进行key、ref、Slot、is、inline-template、css、style等等属性处理
       processElement(branch2, options)
+      // 往branch0描述对象中的ifConditions数组中添加(包含if属性值)的对象
       addIfCondition(branch0, {
         exp: ifCondition,
         block: branch2
       })
-
+      // 判断该input标签是否存在v-else属性
       if (hasElse) {
+        //设置branch0描述对象的else属性为true
         branch0.else = true
+        // v-else属性不存在，v-else-if属性存在并且不为空时
       } else if (elseIfCondition) {
+        // 设置branch0描述对象的elseif属性为v-else-if属性值
         branch0.elseif = elseIfCondition
       }
-
+      // 将branch0描述对象输出
       return branch0
     }
   }
 }
 
 //克隆一个AST树对象
-function cloneASTElement (el) {
+function cloneASTElement(el) {
   return createASTElement(el.tag, el.attrsList.slice(), el.parent)
 }
 

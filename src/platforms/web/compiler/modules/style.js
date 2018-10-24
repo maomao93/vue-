@@ -9,10 +9,14 @@ import {
 } from 'compiler/helpers'
 
 function transformNode (el: ASTElement, options: CompilerOptions) {
+  // 获取警告是提示函数
   const warn = options.warn || baseWarn
+  // 获取静态style属性值
   const staticStyle = getAndRemoveAttr(el, 'style')
+  // 存在静态style属性值
   if (staticStyle) {
     /* istanbul ignore if */
+    // 非生产环境下
     if (process.env.NODE_ENV !== 'production') {
       const res = parseText(staticStyle, options.delimiters)
       if (res) {
@@ -24,11 +28,14 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
         )
       }
     }
+    // 添加el描述对象的staticStyle属性为该静态属性值
     el.staticStyle = JSON.stringify(parseStyleText(staticStyle))
   }
-
+  // 获取动态style属性值
   const styleBinding = getBindingAttr(el, 'style', false /* getStatic */)
+  // 存在动态属性值时
   if (styleBinding) {
+    // 添加el描述对象的styleBinding属性为该动态属性值
     el.styleBinding = styleBinding
   }
 }

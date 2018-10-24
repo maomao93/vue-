@@ -40,7 +40,10 @@ export function addRawAttr (el: ASTElement, name: string, value: any) {
   el.attrsMap[name] = value
   el.attrsList.push({ name, value })
 }
-
+/*
+  作用:
+        1、将指令信息添加到el.directives数组中
+*/
 export function addDirective (
   el: ASTElement,
   name: string,
@@ -52,7 +55,11 @@ export function addDirective (
   (el.directives || (el.directives = [])).push({ name, rawName, value, arg, modifiers })
   el.plain = false
 }
-
+/*
+  作用:
+       1、处理事件修饰符
+       2、将绑定的事件信息添加到el.event或el.nativeEvents
+*/
 export function addHandler (
   el: ASTElement, // 当前元素描述对象
   name: string, // 绑定属性的名字，即事件名称

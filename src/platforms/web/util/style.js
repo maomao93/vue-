@@ -3,9 +3,12 @@
 import { cached, extend, toObject } from 'shared/util'
 
 export const parseStyleText = cached(function (cssText) {
+  // 初始res空对象
   const res = {}
+  // 意思: 用来匹配;后面没有跟非'('无限制个 ')'
   const listDelimiter = /;(?![^(]*\))/g
   const propertyDelimiter = /:(.+)/
+  //
   cssText.split(listDelimiter).forEach(function (item) {
     if (item) {
       var tmp = item.split(propertyDelimiter)
