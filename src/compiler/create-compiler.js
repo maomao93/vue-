@@ -20,7 +20,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
       finalOptions.warn = (msg, tip) => {
         (tip ? tips : errors).push(msg)
       }
-      //判断option是否有传入
+      //判断option是否有传入($mount中传入的option)
       if (options) {
         // merge custom modules
         if (options.modules) {

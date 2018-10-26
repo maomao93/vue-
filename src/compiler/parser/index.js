@@ -62,6 +62,7 @@ export function createASTElement (
 /**
  * Convert HTML string to AST.
  */
+// 将字符串模板解析成AST树
 export function parse (
   template: string,
   options: CompilerOptions

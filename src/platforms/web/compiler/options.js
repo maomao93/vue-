@@ -24,7 +24,7 @@ export const baseOptions: CompilerOptions = {
   getTagNamespace,
   staticKeys: genStaticKeys(modules)
 }
- /*let baseOptions = {
+ let baseOptions = {
    expectHTML: true,
    modules: [
      {
@@ -132,4 +132,4 @@ export const baseOptions: CompilerOptions = {
      }
    },
    staticKeys: 'staticClass,staticStyle'
- }*/
+ }

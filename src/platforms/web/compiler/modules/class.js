@@ -14,8 +14,9 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
   const staticClass = getAndRemoveAttr(el, 'class')
   // 非生产环境 && 不存在class属性值时
   if (process.env.NODE_ENV !== 'production' && staticClass) {
-    //
+    // 判断静态class属性值是否使用了vue的字面表达式
     const res = parseText(staticClass, options.delimiters)
+    // 使用了则提示警告
     if (res) {
       warn(
         `class="${staticClass}": ` +
@@ -25,10 +26,13 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
       )
     }
   }
+  // 在el描述对象上添加staticClass属性，值为静态的class属性值字符串
   if (staticClass) {
     el.staticClass = JSON.stringify(staticClass)
   }
+  // 获取动态的class属性值
   const classBinding = getBindingAttr(el, 'class', false /* getStatic */)
+  // 在el描述对象上添加classBinding属性，值为class动态属性值
   if (classBinding) {
     el.classBinding = classBinding
   }
