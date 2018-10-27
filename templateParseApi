@@ -1,0 +1,39 @@
+--------------------------------------------模板解析--------------------------------------------
+· createCompilerCreator: 编译器创建函数的创建函数
+    - 参数:baseCompile函数
+    - 返回值: createCompiler函数
+
+· createCompiler: 编译器创建函数      ---------------由createCompilerCreator函数创建
+    - 参数: baseOptions对象
+    - 返回值: compile函数和compileToFunctions函数
+
+· createCompileToFunctionFn:  生成compileToFunctions函数的函数
+    - 参数: compile函数
+    - 返回值: compileToFunction函数
+
+. compileToFunctions:   ------------------------由createCompileToFunctionFn函数生成
+    - 参数: template模板字符串、options用户自定义的一些参数、vm当前vue实例
+    - 返回值: 包含render函数和staticRenderFns数组的对象
+
+. compile: 编译模板函数 ------------------在compileToFunctions函数中执行
+    - 参数: template模板字符串、options用户自定义的一些参数
+    - 返回值: 包含警告提示函数，ast树数组、render字符串和staticRenderFns函数的对象
+
+. baseCompile:  将模板解析成AST树和将AST树生成渲染函数的函数 -----------在compile函数中执行
+    - 参数: template模板字符串、options是用户自定义的参数和默认参数合并过后的参数
+    - 返回值: 包含ast树数组、render函数和staticRenderFns函数的对象
+
+. parse: 将模板解析成AST树的函数  --------------------在baseCompile函数中执行
+    - 参数: template模板字符串、options是用户自定义的参数和默认参数合并过后的参数
+    - 返回值: AST树数组
+
+. generate: 将AST数组编译成渲染函数 -----------------在baseCompile函数中执行
+    - 参数: AST树数组、options是用户自定义的参数和默认参数合并过后的参数
+    - 返回值: 包含render字符串和staticRenderFns函数的code对象
+
+. createFunction: 创建render函数     ---------------在compileToFunctions函数中执行
+    - 参数: render字符串、fnGenErrors编译时的错误收集器
+    - 返回值: render函数
+
+
+

@@ -1,0 +1,82 @@
+1、在mounted函数中执行compileToFunctions函数,并将用户的自定义的参数传入，主要是为了
+  将模板字符串编译成render函数和staticRenderFns函数。
+
+2、那compileToFunctions函数怎么来的呢？
+   createCompilerCreator函数执行创建了createCompiler函数 ------>
+   然后执行了createCompiler函数,在createCompiler函数中又执行了createCompileToFunctionFn函数,
+   createCompileToFunctionFn函数执行创建了compileToFunctions函数,
+   最后等于createCompiler函数创建了compile函数和compileToFunctions函数
+
+3、compileToFunctions函数干了什么?
+   1、获取参数中的warn函数
+   2、判断vue是否执行在一个禁止不安全eval的环境中
+   3、将模板字符串和用户自定义的文本表达式符号拼接作为对象key,
+      用于缓存render函数和staticRenderFns数组的，因为在模板字符串不变的情况下不需要
+      重新解析编译。
+   4、执行compile函数生成render字符串和staticRenderFns数组。
+   5、执行createFunction函数将编译好的表达式字符串生成render函数。
+   6、循环执行createFunction函数将staticRenderFns数组中的编译好的表达式字符串生成render函数，并返回保存这些render函数的staticRenderFns数组
+   7、将编译时的错误信息提示出来
+   8、将render函数和staticRenderFns数组输出
+   总结: compileToFunctions函数主要是将compile函数生成的render字符串变成函数并将解析过程中的
+        警告和错误提示出来。
+
+4、compile函数是怎么生成render字符串和staticRenderFns数组的？
+   1、初始化了errors数组和tips数组，生成一个根据传入的参数判断往errors数组或tips数组中添加信息
+   2、合并用户自定义的modules、directives和默认的modules、directives
+   3、用户自定义的一些参数替换默认的参数
+   4、执行baseCompile函数生成render字符串和staticRenderFns数组,以及收集错误和提示信息
+   5、收集AST树中的错误信息
+   6、将errors数组和tips数组和ast树和render字符串和staticRenderFns数组作为对象对应的属性值输出
+   总结: compile函数中生成的render字符串和staticRenderFns数组是由baseCompile函数生成的,
+        compile函数只是合并了一些参数和初始化了错误、提示收集框
+
+5、baseCompile函数是怎么生成render字符串和staticRenderFns数组的？
+   1、执行了parse函数将字符串模板解析成抽象语法树(AST)
+   2、根据用户在未明确传递了optimize参数为false时,对ast树进行优化
+   3、执行generate函数将ast树编译成渲染函数字符串
+   4、将ast树和渲染函数字符串和staticRenderFns数组输出
+   总结: baseCompile函数主要是将parse函数和generate函数生成的东西输出
+
+6、parse函数是怎么生成ast树的？
+   1、缓存一系列option中的参数(比如compile函数中生成的通过参数判断往errors数组或tips数组中添加信息的warn函数)
+   2、初始化保存节点起始标签的stack、是否保存空格的变量、根节点信息root、缓存当前节点的currentParent、判断文本标签的
+      inVPre和inPre变量、控制只提示一次错误或警告信息的warned变量
+   3、初始化只收集一次错误信息的warnOnce函数、将inVPre和inPre变量初始化的函数
+   4、执行parseHTML函数解析模板字符串
+   5、将root信息输出
+
+  一、parseHTML函数是怎么解析模板字符串的(模板字符串用html代替)
+      1、初始化保存起始标签名的数组stack、字符下标index、用于缓存模板的last、缓存模板当前标签的lastTag
+          缓存一系列option参数、一系列用以解析标签的函数
+      2、进入一个通过判断html是否被解析完的循环中,首先是将html缓存到last变量中,然后进入一个判断            ↓
+          -----当lastTag不存在(也就是保存任何标签名)时 || lastTag标签名不为文本标签(script,style,textarea)时
+                这个时候会去查找html中的第一个<字符,接下来会出现种情况:
+                    1、html的第一个字符就是<,但是第一个是<并不代表就一定是标签的<,也有可能是注释的<等等，所以这里又会有好几种情况，并对其一一处理
+                        1、第一种: 为注释节点。
+                                  - 获取-->的下标,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -114,7 +114,7 @@ export function parse (
       inPre = false
     }
     // apply post-transforms
-    //执行postTransforms数组中的所有postTransformNode函数
+    //执行postTransforms数组中的所有postTransformNode函数(只有weex中有该函数，在web是个空数组)
     for (let i = 0; i < postTransforms.length; i++) {
       postTransforms[i](element, options)
     }

@@ -28,10 +28,16 @@ export function detectErrors (ast: ?ASTNode): Array<string> {
 }
 
 function checkNode (node: ASTNode, errors: Array<string>) {
+  // 当类型为节点时
   if (node.type === 1) {
+    // 循环attrsMap对象
     for (const name in node.attrsMap) {
+      /* 方便理解: const dirRE = /^v-|^@|^:/ */
+      // 为绑定的属性时
       if (dirRE.test(name)) {
+        // 获取属性值
         const value = node.attrsMap[name]
+        // 值存在时
         if (value) {
           if (name === 'v-for') {
             checkFor(node, `v-for="${value}"`, errors)
