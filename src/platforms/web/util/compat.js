@@ -5,6 +5,9 @@ import { inBrowser } from 'core/util/index'
 // check whether current browser encodes a char inside attribute values
 let div
 //作用: 判断是否将'\n'转义为了&#10;
+/*
+  经测试: 在谷歌下a中\n被转义 div中\n未被转义
+*/
 function getShouldDecode (href: boolean): boolean {
   //创建一个节点
   div = div || document.createElement('div')

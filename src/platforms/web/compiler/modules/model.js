@@ -23,7 +23,22 @@ import {
   createASTElement
 } from 'compiler/parser/index';
 /*
-  作用: 处理input标签并且存在v-model属性以及确定该input类型的表达式最后将该描述对象输出
+  作用:
+        1、标签名为input但不存在v-model属性时,结束该函数
+        2、type属性存在不为空的值时,删除v-for属性信息
+            1、获取该标签的v-if或v-else或v-else-if属性，并将这些属性信息在attrsMap和attrsList中删除
+            2、attrsMap中添加type:checkbox和attrsList中添加{name:type,value:checkbox}
+            3、对该标签描述对象进行key、ref、Slot、is、inline-template、css、style等等属性处理
+            4、设置ASTElement对象的processed为true,表示已对上面的那些属性进行过处理了,避免重复处理
+            5、设置ASTElement对象的if属性为(types属性值==='checkbox' && 原if属性值)
+            6、在ASTElement对象的ifConditions数组中添加{exp: if属性值,block: ASTElement对象}
+            7、克隆一份ASTElement对象为branch1,往attrsMap中添加type:checkbox和attrsList中添加{name:type,value:radio}
+            8、在ASTElement对象的ifConditions数组中添加{exp: types属性值==='radio' && 原if属性值,block: branch1}
+            9、克隆一份ASTElement对象为branch2,往branch2对象的attrsMap中添加:type:(:type属性值)和attrsList中添加{name:':type',value: 属性值}
+            10、在ASTElement对象的ifConditions数组中添加{exp: 原if属性值,block: branch2}
+            11、标签存在else属性时设置ASTElement对象的else属性为true否则标签存在elseif属性时设置ASTElement对象的elseif属性为标签的elseif属性值
+
+      总结: 处理input标签并且存在v-model属性以及确定该input类型的表达式最后将该描述对象输出
 */
 function preTransformNode(el: ASTElement, options: CompilerOptions) {
   //el: ast树对象  options: 开发者定义的option和默认的option合并过后的option

@@ -92,8 +92,8 @@ export function parse (
   const preserveWhitespace = options.preserveWhitespace !== false
   let root
   let currentParent
-  let inVPre = false
-  let inPre = false
+  let inVPre = false // 标识当前解析的标签是否在拥有 v-pre 的标签之内
+  let inPre = false // 标识当前正在解析的标签是否在 <pre></pre> 标签之内
   let warned = false
   //执行一次错误提示
   function warnOnce (msg) {
@@ -144,7 +144,7 @@ export function parse (
       }
       //创建AST树
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
-      //判断ns是否存在或未true
+      //判断ns是否存在或为true
       if (ns) {
         //将ns属性添加到当前AST树对象上
         element.ns = ns
@@ -162,16 +162,20 @@ export function parse (
       }
 
       // apply pre-transforms
+      // 对input标签进行处理
       for (let i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element
       }
-
+      //
       if (!inVPre) {
+        // 存在v-pre属性时设置ASTElement对象的pre属性为true
         processPre(element)
         if (element.pre) {
+          // 设置inVPre为true,表示接下来解析的标签在拥有 v-pre 的标签之内
           inVPre = true
         }
       }
+      // 当标签为pre时,设置inPre为true,表示接下来解析的标签都在<pre></pre> 标签之内
       if (platformIsPreTag(element.tag)) {
         inPre = true
       }

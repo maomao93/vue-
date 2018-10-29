@@ -287,6 +287,12 @@ export function parseHTML (html, options) {
     html = html.substring(n)
   }
   //解析起始标签(读取标签中的属性并保存)
+  /*
+    作用:
+        解析起始标签，保存该标签起始标签在html中的起始位置和结束位置以及
+        所有的属性字符串,最后将这个信息输出,并将该起始标签在html中剔除。
+    最重要一点是必须有结束标签>才行
+  */
   function parseStartTag () {
     /*const ncname = '[a-zA-Z_][\\w\\-\\.]*'
     const qnameCapture = `((?:${ncname}\\:)?${ncname})`
@@ -308,6 +314,9 @@ export function parseHTML (html, options) {
         当没有匹配到/>或>字符(没有匹配到开始标签的结束部分) 并且
         匹配到这几种 class="some-class"、class='some-class'、class=some-class、disabled 类型的字符 才进入循环
         意思: 没有结束标签但又写了属性
+        便于理解:  \s 等价于 [\f\n\r\t\v]
+                const startTagClose = /^\s*(\/?)>/
+                const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
       */
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
         //将匹配到的属性字符后面的字符串赋值给模板字符串,并将起始下标跟新
@@ -411,7 +420,7 @@ export function parseHTML (html, options) {
 
     // Find the closest opened tag of the same type
 
-    //标标签名传递时
+    //标签名传递时
     if (tagName) {
       //从栈顶到栈底的循环，找到与传进来的标签名参数相同的标签名
       for (pos = stack.length - 1; pos >= 0; pos--) {
