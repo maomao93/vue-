@@ -166,7 +166,6 @@ export function parse (
       for (let i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element
       }
-      //
       if (!inVPre) {
         // 存在v-pre属性时设置ASTElement对象的pre属性为true
         processPre(element)
@@ -189,7 +188,13 @@ export function parse (
         // element-scope stuff
         processElement(element, options)
       }
+      /*
+        作用:
+              1、在非生产环境下,当标签为'slot'或'template'时，将错误提示
+               '不能使用'template'作为组件根元素，因为它可能包含多个节点'放入errors数组中
 
+              2、当节点存在v-for属性时,将错误提示'不能在根组件上使用v-for属性'放入errors数组中。
+      */
       function checkRootConstraints (el) {
         if (process.env.NODE_ENV !== 'production') {
           if (el.tag === 'slot' || el.tag === 'template') {
@@ -208,17 +213,25 @@ export function parse (
       }
 
       // tree management
+      // 当前标签为模板的第一个根标签
       if (!root) {
+        // 将当前标签信息赋值给root
         root = element
+        // 当标签名为slot或template时或存在c-for属性时收集提示错误信息
         checkRootConstraints(root)
+        // 当已有根标签 && 当前标签为根标签的兄弟标签
       } else if (!stack.length) {
         // allow root elements with v-if, v-else-if and v-else
+        // 已有根标签存在if属性 && (当前标签存在elseif或else属性)
         if (root.if && (element.elseif || element.else)) {
+          // 当标签名为slot或template时或存在c-for属性时收集提示错误信息
           checkRootConstraints(element)
+          // 将存在elseif属性或else属性的当前节点放入存在if属性的上一个兄弟节点信息ASTElement对象中的ifConditions数组中
           addIfCondition(root, {
             exp: element.elseif,
             block: element
           })
+          // 不满足上面条件&&在非生产环境下将错误提示放入errors数组中
         } else if (process.env.NODE_ENV !== 'production') {
           warnOnce(
             `Component template should contain exactly one root element. ` +
@@ -227,8 +240,11 @@ export function parse (
           )
         }
       }
+      // 当前标签存在父标签 && 不为(style || script)标签时
       if (currentParent && !element.forbidden) {
+        // 当前标签存在elseif || else属性时
         if (element.elseif || element.else) {
+          // 将当前节点信息放入存在if属性的上一个兄弟节点信息ASTElement对象中的ifConditions数组中
           processIfConditions(element, currentParent)
         } else if (element.slotScope) { // scoped slot
           currentParent.plain = false
@@ -339,7 +355,9 @@ function processPre (el) {
     el.pre = true
   }
 }
-
+/*
+  作用: 将所有的属性值变成静态的字符串属性值
+*/
 function processRawAttrs (el) {
   const l = el.attrsList.length
   if (l) {
@@ -467,33 +485,49 @@ function processIf (el) {
   }
 }
 
+/*
+    作用: 将存在elseif属性或else属性的当前节点放入存在if属性的上一个兄弟节点信息ASTElement对象中的ifConditions数组中
+*/
 function processIfConditions (el, parent) {
+  // 获取当前节点的上一个节点标签的信息
   const prev = findPrevElement(parent.children)
+  // 上一个标签节点存在 && 存在if属性时
+  // 生成{exp: 当前标签的elseif属性,block: 当前标签ASTElement对象}放入上一个标签信息ASTElement对象的ifConditions数组中
+  // 也就是遵循了一个规则,会将存在elseif || else属性的当前标签信息放入存在if属性的上一个标签的ASTElement对象中,
+  // 也就是在父标签信息中只存放一个标签信息
   if (prev && prev.if) {
     addIfCondition(prev, {
       exp: el.elseif,
       block: el
     })
   } else if (process.env.NODE_ENV !== 'production') {
+    // 将错误提示'使用else-if或else需要有相对应的v-if'放入errors数组中
     warn(
       `v-${el.elseif ? ('else-if="' + el.elseif + '"') : 'else'} ` +
       `used on element <${el.tag}> without corresponding v-if.`
     )
   }
 }
-
+/*
+  作用: 将父标签的children数组中的文本节点删除,并将从尾到头循环遇到的第一个标签节点信息输出
+*/
 function findPrevElement (children: Array<any>): ASTElement | void {
+  // 获取父元素的子元素集合数组的长度
   let i = children.length
+  // 循环该集合
   while (i--) {
+    // 当元素为节点标签时直接输出该子标签的ASTElement对象
     if (children[i].type === 1) {
       return children[i]
     } else {
+      // 在非生产环境下 && 该子元素内容为空格字符的文本节点时,将错误提示'在v-if和v-else(-if)标签之间的文本会被忽略'
       if (process.env.NODE_ENV !== 'production' && children[i].text !== ' ') {
         warn(
           `text "${children[i].text.trim()}" between v-if and v-else(-if) ` +
           `will be ignored.`
         )
       }
+      // 将非节点标签的子元素从父元素ASTElement对象的children数组中删除该子元素信息
       children.pop()
     }
   }
@@ -569,7 +603,7 @@ function processSlot (el) {
     }
     // 获取标签的:slot属性值或v-bind:slot属性值都不存在时则获取slot属性值
     const slotTarget = getBindingAttr(el, 'slot')
-    // 当值不存在时
+    // 当值存在时
     if (slotTarget) {
       // 当值为空字符串时  将el.slotTarget赋值为"default"字符串 否则赋值slot属性值
       el.slotTarget = slotTarget === '""' ? '"default"' : slotTarget

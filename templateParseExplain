@@ -55,13 +55,13 @@
                     1、html的第一个字符就是<,但是第一个是<并不代表就一定是标签的<,也有可能是注释的<等等，所以这里又会有好几种情况，并对其一一处理
                         1、第一种: 为注释节点。
                             - 获取-->的下标,当用户需要保存注释时,将注释保存在当前父元素对象的children
-                              数组里,最后将index下标更新,将html中的注释剔除
+                              数组里,最后将index下标更新,将html中的注释剔除                    -----------进入下一循环
 
                         2、第二种: 条件注释节点 比如: <!--[if !IE]>-->
-                            - 获取]>的下标,直接将index下标更新,将html中的条件注释剔除
+                            - 获取]>的下标,直接将index下标更新,将html中的条件注释剔除           -----------进入下一循环
 
                         3、第三种: doctype节点
-                            - 获取doctype节点,接将index下标更新,将html中的doctype节点剔除
+                            - 获取doctype节点,接将index下标更新,将html中的doctype节点剔除      -----------进入下一循环
 
                         4、第四种: 闭合标签
                             - 获取比如:</div 字符,缓存index下标,将index下标更新,将html中的</div字符剔除,
@@ -118,6 +118,90 @@
                               为true并将错误信息添加到errors数组中。
                               当该标签为input标签&&存在v-model属性时&&type(动态属性或静态属性)不为(空或undefined)时,删除v-for属性信息,
                               并对key、ref、Slot、is、inline-template、css、style等等属性处理,并设置if、else、elseif、ifConditions属性。
+
+                            - 当前解析的标签(存在v-pre属性或在v-pre属性的父节点内)时,会将剩余存在ASTElement对象的attrsList数组中的
+                              所有属性值变成静态字符串.
+                              当前解析标签不(存在v-pre属性或在v-pre属性的父节点内)时&& 未处理过属性时,会对改标签的所有属性进行处理。
+
+                            - 当前解析的标签为根标签(也就是解析的第一个起始标签)时,将root赋值为该ASTElement对象,并且当节点为
+                              slot或template时将错误提示放入errors数组中,存在v-for属性时将错误提示'不能在根组件上使用v-for属性'放入errors数组中。
+
+                            - 当前解析标签不为根标签 && 与根标签同级时。(同根级标签,根标签要存在if属性&&当前标签要存在elseif或else,否则要提示错误提示)
+                              如果根标签存在if属性 && 当前标签存在(elseif属性 || else属性)时,与根元素一样对标签名为slot或template时
+                              和存在属性v-for时进行错误提示收集,并在根元素的ASTElement对象中添加ifConditions数组,将
+                              {exp: 当前标签的elseif属性,block: 当前标签的ASTElement对象}添加进ifConditions数组中。
+
+                              否则: 将错误提示放入errors数组中
+
+                            - 当前标签存在父节点 && 不为(style || script)标签时,也就是说该标签不为根元素。
+                              · 当前标签存在elseif或else属性时,将当前节点信息放入存在if属性的上一个兄弟节点信息ASTElement对象中的ifConditions数组中。
+
+                              · 当前标签不存在(elseif&&else)属性&&存在slotScope属性时,将父标签ASTElement对象的plain属性设置为false,
+                                缓存当前标签的slot属性值或"default"字符串为name,设置父标签信息的scopedSlots对象的name属性为当前标签信息ASTElement对象。
+
+                              · 当前标签不存在(elseif&&else)属性&&不存在slotScope属性时,将当前标签信息ASTElement对象放入父节点的children数组,
+                                设置当前标签信息ASTElement对象的parent属性为父标签信息ASTElement对象.
+
+                            - · 当前标签不为一元标签 && 当前起始标签不存在/结束标识符时,设置当前标签信息为下一个起始标签的父标签信息,并将当前起始标签
+                                信息放入parse函数的stack数组中,
+
+                              · 为一元标签 || 存在/结束标识符时,存在v-pre属性则将inVPre初始化为false,当前节点为pre节点时,将inPre变量初始化为false,
+                                然后循环执行options.modules数组中的postTransformNode函数(在weex中存在)
+
+                            - 当前面的执行完后,当前标签不为一元标签或不存在/结束标识符时 && 标签名不为pre,textarea标签 && 剩余html模板第一个字符是'\n'字符时,
+                              将index下标更新并将'\n'字符从html中剔除             --------------------进入下一循环
+
+                    2、html的第一个字符不是<,但是存在<字符
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
