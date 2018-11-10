@@ -195,7 +195,6 @@ export function parseHTML (html, options) {
       }
 
       let text, rest, next
-      //
       if (textEnd >= 0) {
         //缓存<字符后面的模板字符(包括<)
         rest = html.slice(textEnd)
