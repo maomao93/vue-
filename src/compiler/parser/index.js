@@ -102,7 +102,9 @@ export function parse (
       warn(msg)
     }
   }
-
+  /*
+    作用: 初始化inVPre和inPre表示已经跳出pre标签内或v-pre属性的标签内。
+  */
   function closeElement (element) {
     // check pre state
     //判断节点是否存在pre属性
@@ -128,6 +130,22 @@ export function parse (
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
+    /*
+      作用:
+           1、兼容IE浏览器下svg的一些问题并生成当前节点的ASTElement信息对象。
+           2、模板中存在style标签或者script标签提示警告信息
+           3、对input标签进行处理。
+           4、在pre标签内或存在v-pre属性的标签内,并分别设置inPre或inVPre变量为true,将所有的属性值变成静态的字符串属性值.
+           5、不为pre标签或不存在v-pre属性的标签内,对未处理过的节点进行处理.
+           6、对根标签为slot或template进行提示错误,对存在v-for属性的根标签提示错误信息
+           7、存在兄弟根标签,将存在elseif或else属性的兄弟标签信息放入根标签的ifConditions数组中，否则提示警告
+           8、存在父标签&&不为(style || script)标签时.
+              ·当前标签存在elseif || else属性时,将当前节点信息放入存在if属性的上一个兄弟节点信息ASTElement对象中的ifConditions数组中.
+              ·存在slotScope属性时,设置plain属性为false,scopedSlots对象的(default或用户设置的名字)属性为当前节点的ASTElement信息对象。
+              ·不满足上面条件,将当前节点的ASTElement信息对象放入父标签的children数组中，设置ASTElement信息对象的parent属性为父标签信息
+           9、·非一元标签或没有/的结束标签,设置currentParent为当前标签信息,将信息放入stack数组中。
+              ·inVPre和inPre为true时,初始化inVPre和inPre表示已经跳出pre标签内或v-pre属性的标签内。
+    */
     start (tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
@@ -217,14 +235,14 @@ export function parse (
       if (!root) {
         // 将当前标签信息赋值给root
         root = element
-        // 当标签名为slot或template时或存在c-for属性时收集提示错误信息
+        // 当标签名为slot或template时或存在v-for属性时收集提示错误信息
         checkRootConstraints(root)
         // 当已有根标签 && 当前标签为根标签的兄弟标签
       } else if (!stack.length) {
         // allow root elements with v-if, v-else-if and v-else
         // 已有根标签存在if属性 && (当前标签存在elseif或else属性)
         if (root.if && (element.elseif || element.else)) {
-          // 当标签名为slot或template时或存在c-for属性时收集提示错误信息
+          // 当标签名为slot或template时或存在v-for属性时收集提示错误信息
           checkRootConstraints(element)
           // 将存在elseif属性或else属性的当前节点放入存在if属性的上一个兄弟节点信息ASTElement对象中的ifConditions数组中
           addIfCondition(root, {
@@ -256,13 +274,20 @@ export function parse (
         }
       }
       if (!unary) {
+        // 非一元标签或没有/的结束标签,设置currentParent为当前标签信息
         currentParent = element
+        //将信息放入stack数组中
         stack.push(element)
       } else {
         closeElement(element)
       }
     },
-
+    /*
+      作用:
+            1、将stack数组中的最后一个标签信息的children数组的最后一个子标签信息缓存,如果该节点为纯文本标签&&文本为' ' &&不是pre标签则将该子节点信息
+               从children数组中删除。
+            2、将该标签信息从stack数组中删除,并设置currentParent为当前stack数组的最后一个标签信息,inVPre和inPre为true时,初始化inVPre和inPre表示已经跳出pre标签内或v-pre属性的标签内。
+    */
     end () {
       // remove trailing whitespace
 
@@ -286,6 +311,9 @@ export function parse (
       作用:
             1、纯文本的template提示错误信息缺少根元素
             2、不合格的根元素提示将会被忽略根元素外的文本内容
+            3、存在vue字面表达式&&不存在v-pre属性&&(存在text||不为pre标签)时将
+               该节点信息设置为type:2的对象放入children数组中
+            4、当做type:3的普通文本放入children数组中
     */
     chars (text: string) {
       //不存在父元素时
@@ -314,10 +342,13 @@ export function parse (
         return
       }
       const children = currentParent.children
+      // pre标签 || text前后去空文本? (style ||script标签? text : 转义后的文本) :
+      // (保留空格 && 存在子元素? ' ' : '')
       text = inPre || text.trim()
         ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
         // only preserve whitespace if its not right after a starting tag
         : preserveWhitespace && children.length ? ' ' : ''
+      // text为'' && 标签不为pre &&(不保留空格字符 || 当前标签的children对象为空数组)时不进if判断
       if (text) {
         let res
         if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {

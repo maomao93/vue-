@@ -148,8 +148,8 @@ export function parseHTML (html, options) {
 
         // End tag:
         //解析结束标签(必须以</开头的字符串，所以会先解析开始标签)
-        /*   ^<\\/((?:[a-zA-Z_][\\w\\-\\.]*\\:)?[a-zA-Z_][\\w\\-\\.]*)     */
-        const endTagMatch = html.match(endTag)//[<]
+        /*   ^<\\/((?:[a-zA-Z_][\\w\\-\\.]*\\:)?[a-zA-Z_][\\w\\-\\.]*)[^>]*>     */
+        const endTagMatch = html.match(endTag)
         //存在结束标签 比如: </div> </kk:a-c>
         if (endTagMatch) {
           //缓存起始下标
@@ -452,7 +452,7 @@ export function parseHTML (html, options) {
       }
       // Remove the open elements from the stack
       stack.length = pos // 更新stack数组，删除在stack数组的该项标签信息(包括该下标后面的前提存在的话)
-      lastTag = pos && stack[pos - 1].tag // 将lastTag更新为改标签的前一个起始标签
+      lastTag = pos && stack[pos - 1].tag // 将lastTag更新为该标签的前一个起始标签
     }
     /*以下情况一般为在解析闭合开关时才会出现的情况*/
     else if (lowerCasedTagName === 'br') {
