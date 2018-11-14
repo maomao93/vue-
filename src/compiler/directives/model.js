@@ -43,6 +43,10 @@ export function genAssignmentCode (
   assignment: string
 ): string {
   //解析属性值(当属性值中存在[或.时)
+  /*{
+    exp: addcount,
+    key: null
+  }*/
   const res = parseModel(value)
   if (res.key === null) {
     return `${value}=${assignment}`
@@ -98,7 +102,7 @@ export function parseModel (val: string): ModelParseResult {
   val = val.trim()
   // 缓存属性值的长度
   len = val.length
-  // 属性值不存在[字符 || 属性值中最后一个']'字符不在字符串的尾部
+  // 属性值不存在[字符 || 属性值中最后一个']'字符不在字符串的尾部(或不存在']')
   if (val.indexOf('[') < 0 || val.lastIndexOf(']') < len - 1) {
     // 获取属性值最后一个.字符的下标
     index = val.lastIndexOf('.')

@@ -23,7 +23,7 @@
     - 参数: template模板字符串、options是用户自定义的参数和默认参数合并过后的参数
     - 返回值: 包含ast树数组、render函数和staticRenderFns函数的对象
 
-. parse: 将模板解析成AST树的函数  --------------------在baseCompile函数中执行
+. parse: 将模板解析成AST树函数的函数  --------------------在baseCompile函数中执行
     - 参数: template模板字符串、options是用户自定义的参数和默认参数合并过后的参数
     - 返回值: AST树数组
 
@@ -34,6 +34,68 @@
 . createFunction: 创建render函数     ---------------在compileToFunctions函数中执行
     - 参数: render字符串、fnGenErrors编译时的错误收集器
     - 返回值: render函数
+
+.parseHTML: 将模板解析成AST树的函数  ----------------------在parse函数中执行
+    - 参数: template模板、(一系列处理该模板的参数和函数)的对象
+    - 返回值: null
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

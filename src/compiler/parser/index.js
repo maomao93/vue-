@@ -496,7 +496,7 @@ export function parseFor (exp: string): ?ForParseResult {
   //输出解析后的v-for属性信息
   return res
 }
-
+//作用: 用于处理v-if、v-else、v-else-if指令的
 function processIf (el) {
   const exp = getAndRemoveAttr(el, 'v-if')
   if (exp) {
@@ -563,14 +563,18 @@ function findPrevElement (children: Array<any>): ASTElement | void {
     }
   }
 }
-
+/*
+  作用: 往ASTElement信息对象中添加ifConditions数组，数组中保存的是存在v-if、v-else、v-else-if指令的兄弟节点信息
+*/
 export function addIfCondition (el: ASTElement, condition: ASTIfCondition) {
   if (!el.ifConditions) {
     el.ifConditions = []
   }
   el.ifConditions.push(condition)
 }
-
+/*
+  作用: 处理v-once指令
+*/
 function processOnce (el) {
   const once = getAndRemoveAttr(el, 'v-once')
   if (once != null) {
@@ -662,7 +666,11 @@ function processComponent (el) {
     el.inlineTemplate = true
   }
 }
-
+/*
+  作用:
+        1、解析指令属性、方法属性、动态属性以及它们的修饰符,保存动态的属性值
+        2、普通的一些属性将属性值静态化
+*/
 function processAttrs (el) {
   // 缓存节点的属性列表信息
   const list = el.attrsList
@@ -714,7 +722,7 @@ function processAttrs (el) {
             addHandler(
               el, // 节点描述对象
               `update:${camelize(name)}`, // 例子: update:addCount
-              genAssignmentCode(value, `$event`)
+              genAssignmentCode(value, `$event`) //例子:${value}='$event'
             )
           }
         }
@@ -773,6 +781,7 @@ function processAttrs (el) {
       addAttr(el, name, JSON.stringify(value))
       // #6887 firefox doesn't update muted state if set via attribute
       // even immediately after element creation
+      // 当前标签不存在is属性 && 属性名为muted && 标签名为video时将muted属性设置值为true放入el.props数组中
       if (!el.component &&
           name === 'muted' &&
           platformMustUseProp(el.tag, el.attrsMap.type, name)) {
@@ -781,7 +790,9 @@ function processAttrs (el) {
     }
   }
 }
-
+/*
+  作用: 判断当前标签或其祖先标签是否用了v-for指令
+*/
 function checkInFor (el: ASTElement): boolean {
   let parent = el
   while (parent) {

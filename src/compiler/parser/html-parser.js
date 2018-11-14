@@ -75,8 +75,8 @@ function decodeAttr (value, shouldDecodeNewlines) {
   const re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
   return value.replace(re, match => decodingMap[match])
 }
-
-export function parseHTML (html, options) {
+// 作用: 将模板解析成AST树的函数的函数
+export function parseHTML (html, options){
   //生成空数组stack
   const stack = []
   //缓存options.expectHTML
@@ -232,7 +232,7 @@ export function parseHTML (html, options) {
         options.chars(text)
       }
     } else {
-      // lastTag不为空(有未闭合的标签) && 标签为script,style,textarea 时
+      // lastTag不为空(有未闭合的标签) && 未闭合标签为script,style,textarea 时
       let endTagLength = 0
       // 缓存lastTag标签
       const stackedTag = lastTag.toLowerCase()
@@ -248,6 +248,7 @@ export function parseHTML (html, options) {
         endTagLength = endTag.length
         //标签不为script,style,textarea,noscript
         if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
+          // 将注释中的文本截取出来,将条件注释中的内容截取出来
           text = text
             .replace(/<!\--([\s\S]*?)-->/g, '$1') // #7298
             .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1')
@@ -265,12 +266,17 @@ export function parseHTML (html, options) {
       index += html.length - rest.length
       // 更新模板字符串(去除reStackedTag正则匹配后的字符)
       html = rest
-      // 参数: 纯文本标签(script,style,textarea)  初始标签<的位置 || 结束标签</的位置 初始标签>的位置 || 结束标签>的位置
+      // 参数: 纯文本标签(script,style,textarea)  初始标签>的位置 结束标签>的位置
       parseEndTag(stackedTag, index - endTagLength, index)
     }
-    //纯文本或不合格的标签提示错误信息: 字符串的结尾不符合标签格式(还需理解)
+    /*
+      什么情况下回出现？
+        1、与根标签同级的<:dd、<$这种
+        2、起始是<字符但是不符合结束标签格式、起始标签格式、注释标签格式、条件注释格式、Doctype格式
+    */
     if (html === last) {
       options.chars && options.chars(html)
+      // 在非生产环境下并且是根标签时收集错误信息错误的标签
       if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {
         options.warn(`Mal-formatted tag at end of template: "${html}"`)
       }
