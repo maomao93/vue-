@@ -420,7 +420,9 @@ export function processElement (element: ASTElement, options: CompilerOptions) {
   }
   processAttrs(element)
 }
-
+/*
+  作用: 解析key属性并当标签为template时提示警告,ASTElement对象中添加key属性值
+*/
 function processKey (el) {
   const exp = getBindingAttr(el, 'key')
   if (exp) {
@@ -430,7 +432,11 @@ function processKey (el) {
     el.key = exp
   }
 }
-
+/*
+  作用:
+        1、解析ref属性并在ASTElement对象中添加ref属性
+        2、判断ref是否v-for指令中并将判断的值赋值给ASTElement对象中refInFor属性
+*/
 function processRef (el) {
   const ref = getBindingAttr(el, 'ref')
   if (ref) {
