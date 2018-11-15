@@ -6,7 +6,9 @@ import {
   getBindingAttr,
   baseWarn
 } from 'compiler/helpers'
-
+/*
+  作用: 解析动态的class和静态的class值,静态保存到staticClass属性(前提存在静态class),动态保存到classBinding属性(前提存在动态class)
+*/
 function transformNode (el: ASTElement, options: CompilerOptions) {
   //获取默认的警告提示方法
   const warn = options.warn || baseWarn

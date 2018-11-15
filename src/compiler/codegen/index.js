@@ -8,7 +8,15 @@ import { baseWarn, pluckModuleFunction } from '../helpers'
 type TransformFunction = (el: ASTElement, code: string) => string;
 type DataGenFunction = (el: ASTElement) => string;
 type DirectiveFunction = (el: ASTElement, dir: ASTDirective, warn: Function) => boolean;
-
+/*
+  作用:
+        1、生成该实例公有的收集警告函数
+        2、生成一个dataGenFns数组,包含所有的genData函数
+        3、生成一个directives对象,包含用户自定义的指令函数和vue自带的指令函数
+        4、生成一个判断标签不为html中的保留标签的函数maybeComponent
+        5、生成一个应该是为v-once指令用的变量onceId
+        6、生成一个缓存静态渲染函数用的数组staticRenderFns
+*/
 export class CodegenState {
   options: CompilerOptions;
   warn: Function;
@@ -20,14 +28,31 @@ export class CodegenState {
   staticRenderFns: Array<string>;
 
   constructor (options: CompilerOptions) {
+    //缓存options
     this.options = options
+    // 缓存收集警告信息的函数
     this.warn = options.warn || baseWarn
+    // 获取module数组中所有对象的transformCode属性值为数组(目前来说好像一个都没)
     this.transforms = pluckModuleFunction(options.modules, 'transformCode')
+    // 获取module数组中所有对象的genData属性值为数组
     this.dataGenFns = pluckModuleFunction(options.modules, 'genData')
+    // 将on、bind、cloak、model、text、html和用户自定的指令函数合成一个新的对象
+    /*let directives = {
+      on(){},
+      bind(){},
+      cloak(){},
+      model(){},
+      text(){},
+      html(){}
+    }*/
     this.directives = extend(extend({}, baseDirectives), options.directives)
+    // 缓存options中判断标签为html中的保留标签的函数
     const isReservedTag = options.isReservedTag || no
+    // 生成一个判断标签不为html中的保留标签的函数
     this.maybeComponent = (el: ASTElement) => !isReservedTag(el.tag)
+    // 这个应该是为v-once指令用的
     this.onceId = 0
+    // 缓存静态渲染函数用的
     this.staticRenderFns = []
   }
 }
@@ -41,7 +66,9 @@ export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
+  // 生成一个CodegenState实例
   const state = new CodegenState(options)
+  //
   const code = ast ? genElement(ast, state) : '_c("div")'
   return {
     render: `with(this){return ${code}}`,
@@ -50,9 +77,13 @@ export function generate (
 }
 
 export function genElement (el: ASTElement, state: CodegenState): string {
+  // 标签为纯静态根标签 &&不存在staticProcessed属性或staticProcessed属性值为false
   if (el.staticRoot && !el.staticProcessed) {
+
     return genStatic(el, state)
+    // once属性为true && 不存在onceProcessed属性或onceProcessed属性值为false
   } else if (el.once && !el.onceProcessed) {
+    //
     return genOnce(el, state)
   } else if (el.for && !el.forProcessed) {
     return genFor(el, state)
@@ -87,7 +118,9 @@ export function genElement (el: ASTElement, state: CodegenState): string {
 
 // hoist static sub-trees out
 function genStatic (el: ASTElement, state: CodegenState): string {
+  // 设置节点的staticProcessed属性true,表示有处理过纯静态标签(因为纯静态的值处理一遍提高效率)
   el.staticProcessed = true
+
   state.staticRenderFns.push(`with(this){return ${genElement(el, state)}}`)
   return `_m(${
     state.staticRenderFns.length - 1
@@ -98,12 +131,17 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 
 // v-once
 function genOnce (el: ASTElement, state: CodegenState): string {
+  // 设置onceProcessed属性为true，避免重复处理
   el.onceProcessed = true
+  // 存在v-if属性 && ifProcessed属性为false
   if (el.if && !el.ifProcessed) {
     return genIf(el, state)
+    // 不存在v-if属性或已经处理过v-if属性 && staticInFor属性为true(根标签staticInFor属性为false)
   } else if (el.staticInFor) {
     let key = ''
+    // 缓存该标签的父标签信息
     let parent = el.parent
+    // 直到找到存在v-for指令该标签或祖标签,将该存在v-for指令的该标签或祖标签的key属性值缓存为key变量
     while (parent) {
       if (parent.for) {
         key = parent.key
@@ -111,6 +149,7 @@ function genOnce (el: ASTElement, state: CodegenState): string {
       }
       parent = parent.parent
     }
+    // 如果没有在v-for指令的标签上设置key属性则收集警告信息
     if (!key) {
       process.env.NODE_ENV !== 'production' && state.warn(
         `v-once can only be used inside v-for that is keyed. `

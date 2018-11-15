@@ -46,7 +46,7 @@
    4、执行parseHTML函数解析模板字符串
    5、将root信息输出
 
-  一、parseHTML函数是怎么解析模板字符串的(模板字符串用html代替,</div>代表闭合标签,>代表结束标签)
+   一、parseHTML函数是怎么解析模板字符串的(模板字符串用html代替,</div>代表闭合标签,>代表结束标签)
       1、初始化保存起始标签名的数组stack、字符下标index、用于缓存模板的last、缓存模板当前标签的lastTag
           缓存一系列option参数、一系列用以解析标签的函数
       2、进入一个通过判断html是否被解析完的循环中,首先是将html缓存到last变量中,然后进入一个判断            ↓
@@ -188,10 +188,17 @@
 
       3、最后将还存在stack数组中的未闭合标签进行闭合，并收集警告信息。(唯一想到的就是未闭合的根标签)
 
+7、optimize是怎么优化AST的?
+   1、为ats树各个节点中添加static属性true || false,判断其是否为纯静态的节点
+   2、类型为1的只要各个节点的子孙元素为非纯静态节点则其也不是纯静态节点
+   3、类型为1的各个节点添加staticInFor属性(前提为纯静态或存在once属性)
+   4、类型为1的各个节点添加staticRoot属性为true(前提纯静态属性、存在长度大于1的子元素集合 || 第一个子节点不为纯文本类型),
+      否则staticRoot属性为false.
+   比如:<div>23423</div>
+      div: static = false(原因:缺少staticClass和staticStyle)  staticInFor = false staticRoot = false
 
-
-
-
+8、generate是怎么把ast编译成渲染函数的？
+   1、
 
 
 

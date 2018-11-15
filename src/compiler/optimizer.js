@@ -26,6 +26,8 @@ const genStaticKeysCached = cached(genStaticKeys)
  *    在每次重新呈现时为它们创建新的节点;
  * 2。在修补过程中完全跳过它们。
  */
+// 设置纯静态属性static为false || true, staticInFor为false || true(前提是类型为1 && (纯静态 || 存在v-once属性)) ,
+// staticRoot属性为true || false(前提类型为1)
 export function optimize (root: ?ASTElement, options: CompilerOptions) {
   // 不存在AST数组直接return
   if (!root) return
@@ -93,7 +95,16 @@ function markStatic (node: ASTNode) {
     }
   }
 }
-
+/*
+  作用:  前提(节点为非动态或静态文本节点)
+        1、标签为纯静态或只渲染一次的设置staticInFor为false。
+        2、· 标签为纯静态 && 存在长度大于1的子元素集合 && 第一个子元素类型为1的纯静态标签时,设置staticRoot为true
+             并终止函数,表示静态根标签。
+           · 不为纯静态||子元素集合长度等于0 || 子元素集合长度等于1 && 第一个子元素类型为纯静态文本节点时,设置staticRoot为false
+        3、存在子元素集合时,循环其下面类型为1的子孙标签,子孙标签为纯静态或只渲染一次的设置staticInFor为(其父标签存在v-for或其存在
+           v-for设置为true，否则false),然后执行2、3、4
+        4、存在ifConditions属性,设置其类型为1的(兄弟元素及兄弟元素的子孙元素),执行1、2、3、4
+*/
 function markStaticRoots (node: ASTNode, isInFor: boolean) {
   // 非动态或静态文本节点
   if (node.type === 1) {
@@ -154,6 +165,7 @@ function isStatic (node: ASTNode): boolean {
     isPlatformReservedTag(node.tag) && // not a component 是html保留标签
     !isDirectChildOfTemplateFor(node) && // 根标签或离其最近的祖元素是template
     Object.keys(node).every(isStaticKey)// 存在type,tag,attrsList,attrsMap,plain,parent,children,attrs,staticClass,staticStyle属性
+    // 如果没有静态class和style, node中将不存在staticClass,staticStyle属性
   ))
 }
 /*

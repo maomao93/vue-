@@ -8,7 +8,10 @@ import {
   baseWarn
 } from 'compiler/helpers'
 /*
-  作用: 解析静态或动态的style属性值
+  作用:
+        1、解析静态或动态的style属性值。
+        2、静态style值保存在staticStyle属性中(前提存在静态style)
+        3、动态style值保存在styleBinding属性中(前提存在动态style)
 */
 function transformNode (el: ASTElement, options: CompilerOptions) {
   // 获取警告是提示函数

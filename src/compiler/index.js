@@ -16,7 +16,7 @@ export const createCompiler = createCompilerCreator(function baseCompile (
   // 调用 parse 函数将字符串模板解析成抽象语法树(AST)
   const ast = parse(template.trim(), options)
   if (options.optimize !== false) {
-    // 优化AST树
+    // 优化AST树为节点信息添加static、staticInFor、staticRoot属性为false或true来表示该节点是否为纯静态的
     optimize(ast, options)
   }
   // 调用 generate 函数将 ast 编译成渲染函数
