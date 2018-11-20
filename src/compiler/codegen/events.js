@@ -48,13 +48,18 @@ const modifierCode: { [key: string]: string } = {
   middle: genGuard(`'button' in $event && $event.button !== 1`),
   right: genGuard(`'button' in $event && $event.button !== 2`)
 }
-
+/*
+  作用:
+        1、
+*/
 export function genHandlers (
   events: ASTElementHandlers,
   isNative: boolean,
   warn: Function
 ): string {
+  // 存在native修饰符? 'nativeOn:{' : 'on:{'
   let res = isNative ? 'nativeOn:{' : 'on:{'
+  // 循环events参数中的各个事件
   for (const name in events) {
     res += `"${name}":${genHandler(name, events[name])},`
   }
@@ -83,14 +88,15 @@ function genHandler (
   name: string,
   handler: ASTElementHandler | Array<ASTElementHandler>
 ): string {
+  // 不存在该方法的属性值(发现已在处理事件属性时处理过了,不会发生这种情况)
   if (!handler) {
     return 'function(){}'
   }
-
+  //数组时,将数组中的事件对象信息进行处理过后join(',')成字符串放入数组中,将数组输出
   if (Array.isArray(handler)) {
     return `[${handler.map(handler => genHandler(name, handler)).join(',')}]`
   }
-
+  
   const isMethodPath = simplePathRE.test(handler.value)
   const isFunctionExpression = fnExpRE.test(handler.value)
 

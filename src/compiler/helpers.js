@@ -160,7 +160,7 @@ export function addHandler (
 /*
   作用:
         1、获取v-bind:属性 或者:属性 的值
-        2、值!=null时解析属性值当存在非短路|运算符时转换成函数表达式,并将函数表达式或原字符串返回
+        2、值!=null时解析属性值当存在非短路|运算符时转换成函数表达式,并将函数表达式或原字符串返回(解析过滤器)
         3、属性值 == null && getStatic参数 !==false时,获取静态属性值,也就是不带:的该属性值，静态值!=null时返回静态值
 */
 export function getBindingAttr (

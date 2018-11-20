@@ -79,28 +79,33 @@ export function generate (
 export function genElement (el: ASTElement, state: CodegenState): string {
   // 标签为纯静态根标签 &&不存在staticProcessed属性或staticProcessed属性值为false
   if (el.staticRoot && !el.staticProcessed) {
-
     return genStatic(el, state)
     // once属性为true && 不存在onceProcessed属性或onceProcessed属性值为false
   } else if (el.once && !el.onceProcessed) {
-    //
     return genOnce(el, state)
+    // 存在for属性 && 不存在forProcessed属性或forProcessed属性值为false
   } else if (el.for && !el.forProcessed) {
     return genFor(el, state)
+    // 存在if属性 && 不存在ifProcessed属性或ifProcessed属性值为false
   } else if (el.if && !el.ifProcessed) {
     return genIf(el, state)
+    // 标签名为template && 不存在slot属性
   } else if (el.tag === 'template' && !el.slotTarget) {
     return genChildren(el, state) || 'void 0'
+    // 标签名为slot
   } else if (el.tag === 'slot') {
     return genSlot(el, state)
   } else {
     // component or element
     let code
+    // 标签存在is属性
     if (el.component) {
       code = genComponent(el.component, el, state)
+      // 不存在is属性
     } else {
+      // 节点没有任何属性&&(不存在v-pre指令(前提:存在v-pre节点的子组件) || 不存在key属性)
       const data = el.plain ? undefined : genData(el, state)
-
+      // 节点存在inlineTemplate属性
       const children = el.inlineTemplate ? null : genChildren(el, state, true)
       code = `_c('${el.tag}'${
         data ? `,${data}` : '' // data
@@ -108,19 +113,25 @@ export function genElement (el: ASTElement, state: CodegenState): string {
         children ? `,${children}` : '' // children
       })`
     }
-    // module transforms
+    // module transforms(在web端没有)
     for (let i = 0; i < state.transforms.length; i++) {
       code = state.transforms[i](el, code)
     }
+    // 输出code
     return code
   }
 }
 
 // hoist static sub-trees out
+/*
+  作用:
+        1、将onceProcessed属性设置为true。
+        2、将`with(this){return ${genElement(el, state)}}`字符放入state.staticRenderFns数组中。
+        3、返回`_m(${state.staticRenderFns.length - 1}${el.staticInFor ? ',true' : ''})`字符串。
+*/
 function genStatic (el: ASTElement, state: CodegenState): string {
   // 设置节点的staticProcessed属性true,表示有处理过纯静态标签(因为纯静态的值处理一遍提高效率)
   el.staticProcessed = true
-
   state.staticRenderFns.push(`with(this){return ${genElement(el, state)}}`)
   return `_m(${
     state.staticRenderFns.length - 1
@@ -130,11 +141,22 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 }
 
 // v-once
+/*
+  作用:
+        1、用于处理v-once属性,并设置onceProcessed = true;
+        · 存在v-if属性,返回genIf(el, state)函数,结束该函数,也就是说处理v-if指令
+        · staticInFor = true(根标签为false)
+            1、存在key值,返回`_o(${genElement(el, state)},${state.onceId++},${key})`,结束该函数,
+              genElement(el, state)等于继续处理下一种情况
+            2、不存在key值,返回genElement(el, state),等于继续处理下一种情况
+        · 不存在 v-if属性&&staticInFor = false,返回genStatic(el, state)函数,结束该函数。
+*/
 function genOnce (el: ASTElement, state: CodegenState): string {
   // 设置onceProcessed属性为true，避免重复处理
   el.onceProcessed = true
   // 存在v-if属性 && ifProcessed属性为false
   if (el.if && !el.ifProcessed) {
+    // 将值作为genElement(el, state)函数的值,将其作为staticRenderFns数组中保存的第一个函数的返回值
     return genIf(el, state)
     // 不存在v-if属性或已经处理过v-if属性 && staticInFor属性为true(根标签staticInFor属性为false)
   } else if (el.staticInFor) {
@@ -154,14 +176,22 @@ function genOnce (el: ASTElement, state: CodegenState): string {
       process.env.NODE_ENV !== 'production' && state.warn(
         `v-once can only be used inside v-for that is keyed. `
       )
+      // 将值作为genElement(el, state)函数的值,将其作为staticRenderFns数组中保存的第一个函数的返回值
       return genElement(el, state)
     }
+    // 将值作为genElement(el, state)函数的值,将其作为staticRenderFns数组中保存的第一个函数的返回值
     return `_o(${genElement(el, state)},${state.onceId++},${key})`
   } else {
+    // 不存在v-if属性 || staticInFor属性为false
+    // 将值作为genElement(el, state)函数的值,将其作为staticRenderFns数组中保存的第一个函数的返回值
     return genStatic(el, state)
   }
 }
-
+/*
+  作用:
+        1、设置ifProcessed属性为true。
+        2、返回genIfConditions(el.ifConditions.slice(), state, altGen, altEmpty)函数。
+*/
 export function genIf (
   el: any,
   state: CodegenState,
@@ -171,7 +201,13 @@ export function genIf (
   el.ifProcessed = true // avoid recursion
   return genIfConditions(el.ifConditions.slice(), state, altGen, altEmpty)
 }
-
+/*
+  作用:
+        1、不存在v-if属性返回altEmpty参数 || '_e()'
+        2、存在if属性值时,返回`(${condition.exp})?${genTernaryExp(condition.block)}
+            :${genIfConditions(conditions, state, altGen, altEmpty)}`
+        3、存在if属性值时,返回`${genTernaryExp(condition.block)}`
+*/
 function genIfConditions (
   conditions: ASTIfConditions,
   state: CodegenState,
@@ -181,7 +217,7 @@ function genIfConditions (
   if (!conditions.length) {
     return altEmpty || '_e()'
   }
-
+  // 获取存在if属性的节点信息
   const condition = conditions.shift()
   if (condition.exp) {
     return `(${condition.exp})?${
@@ -202,18 +238,25 @@ function genIfConditions (
         : genElement(el, state)
   }
 }
-
+/*
+   作用:
+        1、用来处理v-for指令的,将处理过的值变成表达式
+*/
 export function genFor (
   el: any,
   state: CodegenState,
   altGen?: Function,
   altHelper?: string
 ): string {
+  // 缓存for循环的数据来源 比如:arr
   const exp = el.for
+  // 缓存value
   const alias = el.alias
+  // 存在index||key? `,(key || index)` : ''
   const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
+  // 存在index? `,index` : ''
   const iterator2 = el.iterator2 ? `,${el.iterator2}` : ''
-
+  // 非生产环境下 && 不是html保留标签名 && 标签名不是slot && 标签名不是template && 不存在key属性时收集警告信息
   if (process.env.NODE_ENV !== 'production' &&
     state.maybeComponent(el) &&
     el.tag !== 'slot' &&
@@ -227,14 +270,17 @@ export function genFor (
       true /* tip */
     )
   }
-
+  // 设置forProcessed属性为true表示已经用genFor处理过了
   el.forProcessed = true // avoid recursion
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `return ${(altGen || genElement)(el, state)}` +
     '})'
 }
-
+/*
+  作用:
+        1、
+*/
 export function genData (el: ASTElement, state: CodegenState): string {
   let data = '{'
 
@@ -243,34 +289,35 @@ export function genData (el: ASTElement, state: CodegenState): string {
   const dirs = genDirectives(el, state)
   if (dirs) data += dirs + ','
 
-  // key
+  // key 存在key属性
   if (el.key) {
     data += `key:${el.key},`
   }
-  // ref
+  // ref 存在ref属性
   if (el.ref) {
     data += `ref:${el.ref},`
   }
+  // 节点在for循环中
   if (el.refInFor) {
     data += `refInFor:true,`
   }
-  // pre
+  // pre 存在v-pre属性
   if (el.pre) {
     data += `pre:true,`
   }
-  // record original tag name for components using "is" attribute
+  // record original tag name for components using "is" attribute 存在is属性
   if (el.component) {
     data += `tag:"${el.tag}",`
   }
-  // module data generation functions
+  // module data generation functions 循环进行options中genData函数获取静态动态的class和style
   for (let i = 0; i < state.dataGenFns.length; i++) {
     data += state.dataGenFns[i](el)
   }
-  // attributes
+  // attributes 对剩余的属性值进行转义处理,并生成字符串形式的object对象
   if (el.attrs) {
     data += `attrs:{${genProps(el.attrs)}},`
   }
-  // DOM props
+  // DOM props 对存在prop修饰符的属性的值和一些比较特殊的属性的值进行转义处理,并生成字符串形式的object对象
   if (el.props) {
     data += `domProps:{${genProps(el.props)}},`
   }
@@ -521,7 +568,9 @@ function genComponent (
     children ? `,${children}` : ''
   })`
 }
-
+/*
+  作用: 对剩余未处理的属性值中的行分隔符和段落分隔符转义,并合并成以,隔开的key:value的格式字符串,将该字符串输出
+*/
 function genProps (props: Array<{ name: string, value: any }>): string {
   let res = ''
   for (let i = 0; i < props.length; i++) {
@@ -545,6 +594,7 @@ function generateValue (value) {
 }
 
 // #3895, #4268
+/*这个编码为2028的字符为行分隔符、2029为段落分隔符，会被浏览器理解为换行，而在Javascript的字符串表达式中是不允许换行的，从而导致错误*/
 function transformSpecialNewlines (text: string): string {
   return text
     .replace(/\u2028/g, '\\u2028')
