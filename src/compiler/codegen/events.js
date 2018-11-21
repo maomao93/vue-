@@ -96,19 +96,25 @@ function genHandler (
   if (Array.isArray(handler)) {
     return `[${handler.map(handler => genHandler(name, handler)).join(',')}]`
   }
-  
+  //const simplePathRE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['[^']*?']|\["[^"]*?"]|\[\d+]|\[[A-Za-z_$][\w$]*])*$/
+  /*比如: ab['ab']、ab["ab"]、ab[1]、ab[ab]、ab.ab、ab*/
   const isMethodPath = simplePathRE.test(handler.value)
+  // const fnExpRE = /^([\w$_]+|\([^)]*?\))\s*=>|^function\s*\(/
+  /*比如: a => 、(a) =>、function (*/
   const isFunctionExpression = fnExpRE.test(handler.value)
-
+  // 没有修饰符
   if (!handler.modifiers) {
+    // 满足以上增比如中的一种则返回原表达式
     if (isMethodPath || isFunctionExpression) {
       return handler.value
     }
-    /* istanbul ignore if */
+    /* istanbul ignore if 在weex下*/
     if (__WEEX__ && handler.params) {
       return genWeexHandler(handler.params, handler.value)
     }
+    // 返回`function($event){方法属性值表达式}`
     return `function($event){${handler.value}}` // inline statement
+    // 有修饰符
   } else {
     let code = ''
     let genModifierCode = ''
