@@ -597,8 +597,34 @@ function processOnce (el) {
              && 不存在slot-scope属性值时，往标签对象的attrs数组中添加保存slot属性信息的对象
     总结: 获取slot节点的name属性值添加为el.slotName或者 (获取template节点的scope属性值 || slot-scope属性值)为el.slotScope
           或者获取非(template、slot)节点的slot-scope属性值为el.slotScope  获取非(slot)节点的slot属性添加为el.slotTarget
-
 */
+/*solt: {
+  slotName: 'header' //name
+}
+template: {
+  slotScope: '', // slot-scope || scope
+  slotTarget: '', // slot属性存在时
+  parent: {
+    scopedSlots: {
+      ("default" || header): ASTElement
+    }, // 当存在slot-scope属性时
+    children: [ASTElement] // 不存在slot-scope属性时
+  }
+}
+'非solt非template': {
+  slotScope: '', // slot-scope
+  parent: {
+    scopedSlots: {
+      ("default" || header): ASTElement
+    }, // 当存在slot-scope属性时
+    children: [ASTElement] // 不存在slot-scope属性时
+  }
+  attrs: [{
+    name: 'slot',
+    value: slotTarget, //slot 当slot-scope不存在时才会将这个对象放入attrs数组中
+  }]
+  slotTarget: '',// slot属性存在时
+}*/
 function processSlot (el) {
   //当标签名为slot时
   if (el.tag === 'slot') {
@@ -693,7 +719,7 @@ function processAttrs (el) {
       el.hasBindings = true
       // modifiers  解析属性名是否存在修饰符并返回undefined或{修饰符: true}
       modifiers = parseModifiers(name)
-      // 存在修饰符时将缓存去除修饰符后的属性名
+      // 存在修饰符时将缓存去除修饰符后的属性名    const modifierRE = /\.[^.]+/g
       if (modifiers) {
         name = name.replace(modifierRE, '')
       }
@@ -751,19 +777,20 @@ function processAttrs (el) {
         // 解析事件指令并添加到el描述对象中的events属性或nativeEvents属性中
         addHandler(el, name, value, modifiers, false, warn)
       } else { // normal directives
+        // const dirRE = /^v-|^@|^:/
         // 解析其他指令(比如自定义的指令v-model)
-        name = name.replace(dirRE, '')
+        name = name.replace(dirRE, '')// 去掉属性名的v-
         // parse arg
         /* 便于理解: const argRE = /:(.*)$/ */
-        // 获取指令的参数(:参数名)
+        // 获取指令的参数(:参数名) 比如: model:foo.a.b
         const argMatch = name.match(argRE)
-        // 获取指令的参数名
+        // 获取指令的参数名 比如 foo.a.b
         const arg = argMatch && argMatch[1]
-        // 参数名存在时,获取指令名
+        // 参数名存在时,获取指令名 比如model
         if (arg) {
           name = name.slice(0, -(arg.length + 1))
         }
-        // 将指令信息添加到el.directives数组中
+        // 将指令信息添加到el.directives数组中 参数比如: input, model, v-model, list, foo, {a: true,b: true}
         addDirective(el, name, rawName, value, arg, modifiers)
         // 非生产环境下 && 指令名为model时
         if (process.env.NODE_ENV !== 'production' && name === 'model') {

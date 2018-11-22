@@ -321,23 +321,25 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.props) {
     data += `domProps:{${genProps(el.props)}},`
   }
-  // event handlers
+  // event handlers 对事件中的修饰符和属性值进行处理生成函数或数组，放入对应的key事件名中，然后将生成字符串形式的object对象输出
   if (el.events) {
     data += `${genHandlers(el.events, false, state.warn)},`
   }
+  // 与上面一样处理的是nativeEvents
   if (el.nativeEvents) {
     data += `${genHandlers(el.nativeEvents, true, state.warn)},`
   }
   // slot target
   // only for non-scoped slots
+  // 存在slot属性 && 不存在slot-scope属性 输出 比如: slot: 'header'
   if (el.slotTarget && !el.slotScope) {
     data += `slot:${el.slotTarget},`
   }
-  // scoped slots
+  // scoped slots 存在scopedSlots说明子节点存在slot-scope属性
   if (el.scopedSlots) {
     data += `${genScopedSlots(el.scopedSlots, state)},`
   }
-  // component v-model
+  // component v-model 存在v-model指令
   if (el.model) {
     data += `model:{value:${
       el.model.value
@@ -347,13 +349,14 @@ export function genData (el: ASTElement, state: CodegenState): string {
       el.model.expression
     }},`
   }
-  // inline-template
+  // inline-template // 存在inline-template属性
   if (el.inlineTemplate) {
     const inlineTemplate = genInlineTemplate(el, state)
     if (inlineTemplate) {
       data += `${inlineTemplate},`
     }
   }
+  // 将最末尾的,去掉，并添加}字符
   data = data.replace(/,$/, '') + '}'
   // v-bind data wrap
   if (el.wrapData) {
@@ -396,14 +399,25 @@ function genDirectives (el: ASTElement, state: CodegenState): string | void {
     return res.slice(0, -1) + ']'
   }
 }
-
+/*
+  作用:
+        1、处理存在Inline-template属性的节点(子元素集合为0或大于1 || 第一个子元素的类型不为1)时，收集错误信息'内联模板组件必须只有一个子元素'
+        2、第一个子元素类型为1时,将ast编译成渲染函数,返回
+          `inlineTemplate:{
+              render:function(){${inlineRenderFns.render}},
+              staticRenderFns:[${inlineRenderFns.staticRenderFns.map(code => `function(){${code}}`).join(',')}]
+          }`
+*/
 function genInlineTemplate (el: ASTElement, state: CodegenState): ?string {
+  // 缓存节点的以一个子元素信息
   const ast = el.children[0]
+  // 在非生产环境下 && (子元素集合为0或大于1 || 第一个子元素的类型不为1)时，收集错误信息'内联模板组件必须只有一个子元素'
   if (process.env.NODE_ENV !== 'production' && (
     el.children.length !== 1 || ast.type !== 1
   )) {
     state.warn('Inline-template components must have exactly one child element.')
   }
+  // 第一个子元素的类型为1时
   if (ast.type === 1) {
     const inlineRenderFns = generate(ast, state.options)
     return `inlineTemplate:{render:function(){${
@@ -413,52 +427,89 @@ function genInlineTemplate (el: ASTElement, state: CodegenState): ?string {
     }]}`
   }
 }
-
+/*
+  作用:
+        1、对所有插糟子元素进行处理，输出比如:`scopedSlots:_u([genScopedSlot('header',ASTElement, state),genScopedSlot('default',ASTElement, state)])`
+*/
 function genScopedSlots (
   slots: { [key: string]: ASTElement },
   state: CodegenState
 ): string {
+  /*
+    scopedSlots: {
+      header: ASTElement,
+      "default": ASTElement
+    }
+  */
   return `scopedSlots:_u([${
     Object.keys(slots).map(key => {
       return genScopedSlot(key, slots[key], state)
     }).join(',')
   }])`
 }
-
+/*
+   作用:
+         1、对单个插糟子元素进行处理
+         2、存在for属性,返回 _l((循环源数据),function(单个循环数据,下标||key,index || '') { return 第三步的输出值})
+         3、不存在for属性,返回比如:
+            {
+              key: 'header',
+              fn: `function(String(slotScope属性值)){
+                  第一种(标签不为template): return genElement(el, state)
+                  第二种(标签为template):
+                      1、存在if属性: return `${el.if}?${genChildren(el, state) || 'undefined'}:undefined`
+                      2、不存在if属性 return genChildren(el, state) || 'undefined'
+              }`
+            }
+*/
 function genScopedSlot (
   key: string,
   el: ASTElement,
   state: CodegenState
 ): string {
+  //存在for属性 && forProcessed属性不存在
   if (el.for && !el.forProcessed) {
     return genForScopedSlot(key, el, state)
   }
+  // 不存在for属性 || forProcessed为true
   const fn = `function(${String(el.slotScope)}){` +
-    `return ${el.tag === 'template'
-      ? el.if
+    `return ${el.tag === 'template' // 标签为template
+      ? el.if // 存在if属性的template
         ? `${el.if}?${genChildren(el, state) || 'undefined'}:undefined`
         : genChildren(el, state) || 'undefined'
       : genElement(el, state)
     }}`
   return `{key:${key},fn:${fn}}`
 }
-
+/*
+  作用:
+      对for循环进行处理,输出比如: _l((lists),function(item,index,'') { return genScopedSlot(key, el, state)})
+*/
 function genForScopedSlot (
   key: string,
   el: any,
   state: CodegenState
 ): string {
-  const exp = el.for
-  const alias = el.alias
-  const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
-  const iterator2 = el.iterator2 ? `,${el.iterator2}` : ''
+  const exp = el.for //缓存循环源数据字段
+  const alias = el.alias // 缓存value字段
+  const iterator1 = el.iterator1 ? `,${el.iterator1}` : '' // 存在key || index字段
+  const iterator2 = el.iterator2 ? `,${el.iterator2}` : ''// 存在index字段
+  // 设置forProcessed为true,表示已对v-for指令处理过了
   el.forProcessed = true // avoid recursion
   return `_l((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `return ${genScopedSlot(key, el, state)}` +
     '})'
 }
-
+/*
+   作用:
+         1、不存在子节点，返回undefined
+         2、只存在一个子节点 && 该节点不为template和slot,传了altGenElement参数返回altGenElement(el,state);
+            没传返回genElement(el, state)
+         3、不满足以上条件,传了altGenNode参数,对子元素结合进行altGenNode(c, state)处理,并将返回结果用，拼接放入
+            数组中;没传对子元素结合进行genNode(c, state)处理.
+            最后输出`[genNode(c, state),genNode(c, state)]` || `[genNode(c, state),genNode(c, state)], 2 || 3`
+*/
 export function genChildren (
   el: ASTElement,
   state: CodegenState,
@@ -467,9 +518,12 @@ export function genChildren (
   altGenNode?: Function
 ): string | void {
   const children = el.children
+  // 存在子元素
   if (children.length) {
+    // 缓存第一个子元素的信息
     const el: any = children[0]
-    // optimize single v-for
+    // optimize single v-for 优化一个for循环
+    //只有一个子元素&&存在for属性 && 不是template标签 && 不是slot标签时 返回genElement(el, state)
     if (children.length === 1 &&
       el.for &&
       el.tag !== 'template' &&
@@ -491,33 +545,53 @@ export function genChildren (
 // 0: no normalization needed
 // 1: simple normalization needed (possible 1-level deep nested array)
 // 2: full normalization needed
+/*
+  作用:
+        1、子元素(存在for属性 || template || slot) || (存在if属性&&兄弟元素有一个(存在for属性 || 是template || 是slot)) 时 返回2,
+        2、元素不为html保留字段的函数 || 存在if属性&&兄弟元素有一个标签不为html保留字段的函数 时, 返回1(前提不满足条件1)
+        3、不满足以上条件是输出0
+*/
 function getNormalizationType (
-  children: Array<ASTNode>,
-  maybeComponent: (el: ASTElement) => boolean
+  children: Array<ASTNode>, //子元素集合
+  maybeComponent: (el: ASTElement) => boolean //判断该标签不为html保留字段的函数
 ): number {
   let res = 0
+  // 循环子节点
   for (let i = 0; i < children.length; i++) {
+    //缓存单个子节点信息
     const el: ASTNode = children[i]
+    // 类型不为1的进入下一循环
     if (el.type !== 1) {
       continue
     }
+    // (存在for属性 || template || slot) || (存在if属性&&兄弟元素有一个(存在for属性 || 是template || 是slot))时 设置res为2 终止循环
     if (needsNormalization(el) ||
         (el.ifConditions && el.ifConditions.some(c => needsNormalization(c.block)))) {
       res = 2
       break
     }
+    //该标签不为html保留字段的函数 || (存在if属性&&兄弟元素有一个标签不为html保留字段的函数)时 设置res为3 继续循环
     if (maybeComponent(el) ||
         (el.ifConditions && el.ifConditions.some(c => maybeComponent(c.block)))) {
       res = 1
     }
   }
+  //输出res
   return res
 }
-
+/*
+  作用: 判断该标签 是否存在for属性 || 是否是template || 是否是slot
+*/
 function needsNormalization (el: ASTElement): boolean {
   return el.for !== undefined || el.tag === 'template' || el.tag === 'slot'
 }
 
+/*
+    作用:
+          1、节点类型为1,返回genElement(node, state)
+          2、节点类型为3&&为注释节点时,返回genComment(node)
+          3、类型为2或类型为3的非注释节点时,返回genText(node)
+*/
 function genNode (node: ASTNode, state: CodegenState): string {
   if (node.type === 1) {
     return genElement(node, state)
@@ -527,7 +601,12 @@ function genNode (node: ASTNode, state: CodegenState): string {
     return genText(node)
   }
 }
-
+/*
+  作用:
+        1、处理纯文本节点或类型为2的动态文本节点.
+        2、纯文本节点: 对纯文本节点中的行分隔符和段落分隔符转义,输出_v(文本)
+        3、动态文本: 输出_v(表达式)
+*/
 export function genText (text: ASTText | ASTExpression): string {
   return `_v(${text.type === 2
     ? text.expression // no need for () because already wrapped in _s()
@@ -535,6 +614,10 @@ export function genText (text: ASTText | ASTExpression): string {
   })`
 }
 
+/*
+  作用:
+        1、处理注释文本内容,输出_e(注释文本)
+*/
 export function genComment (comment: ASTText): string {
   return `_e(${JSON.stringify(comment.text)})`
 }
