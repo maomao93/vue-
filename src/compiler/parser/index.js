@@ -790,7 +790,7 @@ function processAttrs (el) {
         if (arg) {
           name = name.slice(0, -(arg.length + 1))
         }
-        // 将指令信息添加到el.directives数组中 参数比如: input, model, v-model, list, foo, {a: true,b: true}
+        // 将指令信息添加到el.directives数组中 参数比如: input, model, v-model, modelValue, foo, {a: true,b: true}
         addDirective(el, name, rawName, value, arg, modifiers)
         // 非生产环境下 && 指令名为model时
         if (process.env.NODE_ENV !== 'production' && name === 'model') {

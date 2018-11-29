@@ -3,24 +3,47 @@
 /**
  * Cross-platform code generation for component v-model
  */
+/*    parseModel解析结果的所有情况(.sync修饰符的属性值)
+    比如:
+          1、obj.val         {exp: 'obj',key: '"val"'}
+          2、obj             {exp: 'obj',key: null}
+          3、obj[a].val      {exp: 'obj[a]',key: '"val"'}
+          4、obj[a]          {exp: 'obj',key: 'a'}
+          5、obj['a']        {exp: 'obj',key: '"a"'}
+          6、obj[a][b]       {exp: 'obj[a]',key: 'b'}
+          7、obj[a[b]]       {exp: 'obj',key: 'a[b]'}
+*/
+/*
+  作用:
+        1、处理v-model的修饰符对值的影响
+        2、为el添加model属性
+            model = {
+              value: '(a)',
+              expression: '"a"',
+              callback: 'function ('$$v') { a = '$$v' || $set(a, 'b', '$$v') }'
+            }
+*/
 export function genComponentModel (
   el: ASTElement,
   value: string,
   modifiers: ?ASTModifiers
 ): ?boolean {
+  // 获取修饰符中的number和trim的值，如果不存在为undefined
   const { number, trim } = modifiers || {}
-
   const baseValueExpression = '$$v'
   let valueExpression = baseValueExpression
+  // 存在trim修饰符 valueExpression = `(typeof '$$v' === 'string'? '$$v'.trim() : '$$v')`
   if (trim) {
     valueExpression =
       `(typeof ${baseValueExpression} === 'string'` +
       `? ${baseValueExpression}.trim()` +
       `: ${baseValueExpression})`
   }
+  // 存在number修饰符 valueExpression = `_n('$$v' || "(typeof '$$v' === 'string'? '$$v'.trim() : '$$v')")`
   if (number) {
     valueExpression = `_n(${valueExpression})`
   }
+  // value = '$$v' || $set(${res.exp}, ${res.key}, '$$v')
   const assignment = genAssignmentCode(value, valueExpression)
 
   el.model = {
@@ -35,7 +58,7 @@ export function genComponentModel (
  */
 /*
   作用:
-        1、属性值不存在[ 或者 ']'字符不在参数的最后一位时,不存在.字符时   输出 value = assignment
+        1、属性值不存在[ 或者 ']'字符不在参数的最后一位时,不存在.字符时   输出 'value = assignment'
         2、属性值存在[字符 && ']'字符为参数的最后一位时, 输出$set(${res.exp}, ${res.key}, ${assignment})
 */
 export function genAssignmentCode (
@@ -43,10 +66,6 @@ export function genAssignmentCode (
   assignment: string
 ): string {
   //解析属性值(当属性值中存在[或.时)
-  /*{
-    exp: addcount,
-    key: null
-  }*/
   const res = parseModel(value)
   if (res.key === null) {
     return `${value}=${assignment}`
@@ -147,7 +166,9 @@ export function parseModel (val: string): ModelParseResult {
 function next (): number {
   return str.charCodeAt(++index)
 }
-
+/*
+    作用: 判断当前字符下标是否>=字符串总长度
+*/
 function eof (): boolean {
   return index >= len
 }

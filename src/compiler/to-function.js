@@ -7,7 +7,11 @@ type CompiledFunctionResult = {
   render: Function;
   staticRenderFns: Array<Function>;
 };
-
+/*
+  作用:
+        1、将参数code作为函数内容
+        2、有错收集错误信息，并返回一个空函数
+*/
 function createFunction (code, errors) {
   try {
     return new Function(code)
@@ -16,11 +20,27 @@ function createFunction (code, errors) {
     return noop
   }
 }
-
+/*
+  作用:
+        1、输出(生成包含render函数和staticRenderFns数组和ast树对象)的函数
+        2、生成缓存res对象(保存有render函数和staticRenderFns数组和ast树)
+*/
 export function createCompileToFunctionFn (compile: Function): Function {
   //缓存一个原型为空的对象
   const cache = Object.create(null)
   //返回compileToFunctions函数
+  /*
+     作用:
+          1、检测运行环境是否支持vue
+          2、vue的字面表达式模板没有变化 && 模板字符没有变化时,将cache对象中保存的res数据输出
+          3、vue的字面表达式模板有变化 || 模板字符有变化时,重新编译处理模板收集错误信息,
+             在非生产环境下打印错误信息'编译模板错误: 所有的错误信息'和提示信息
+          4、将动态渲染render字符串表达式作为函数内容并赋值为res.render的值,如果有错误收集错误信息。
+          5、将静态渲染render字符串表达式集合staticRenderFns循环作为函数内容,并将集合赋值为res.staticRenderFns的值,
+             如果有错误收集错误信息。
+          6、编辑时没有错误，但是生成render函数时有错误则打印'未能生成呈现函数',并将生成render函数时的错误也打印出来
+          7、将模板字符串作为key,将res作为值放入cache空对象中(避免模板没变化时需要重新编译)
+  */
   return function compileToFunctions (
     template: string,
     options?: CompilerOptions,//这个options是$mount中传入的
@@ -65,7 +85,12 @@ export function createCompileToFunctionFn (compile: Function): Function {
       return cache[key]
     }
 
-    // compile
+    /*
+      1、合并用户传入的option和vue自定义的option
+      2、将模板解析成AST树,并将ast树优化,并生成动态渲染函数render和静态渲染函数集合staticRenderFns,并收集错误警告提示信息
+      3、收集ast中节点类型为1和2中指令的属性值的错误信息，并指出错误位置
+      4、将包含ast树、render、staticRenderFns、errors、tips的对象输出
+    */
     const compiled = compile(template, options)
 
     // check compilation errors/tips

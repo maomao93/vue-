@@ -78,13 +78,14 @@ Vue.prototype.$mount = function (
       if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
         mark('compile')
       }
-
+      // 将模板生成ast和渲染函数render和静态渲染函数集合staticRenderFns
       const { render, staticRenderFns } = compileToFunctions(template, {
         shouldDecodeNewlines,
         shouldDecodeNewlinesForHref,
         delimiters: options.delimiters,
         comments: options.comments
       }, this)
+      // 缓存render函数和静态渲染函数集合
       options.render = render
       options.staticRenderFns = staticRenderFns
 

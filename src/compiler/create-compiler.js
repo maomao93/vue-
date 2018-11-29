@@ -3,9 +3,25 @@
 import { extend } from 'shared/util'
 import { detectErrors } from './error-detector'
 import { createCompileToFunctionFn } from './to-function'
-
+/*
+  作用:
+        1、生成输出包含(生成渲染函数内容的函数和生成渲染函数的函数)对象的函数
+*/
 export function createCompilerCreator (baseCompile: Function): Function {
+  /*
+    作用: 1、输出包含
+          (将模板解析成AST树,并将ast树优化,并生成动态渲染函数render字符串表达式和静态渲染函数字符串表达式集合staticRenderFns)的函数和
+          (生成包含render函数和staticRenderFns数组和ast树对象)函数(并对生成的对象进行了缓存避免重复生成)的对象
+          简单讲就是生成渲染函数内容的函数和生成渲染函数的函数
+  */
   return function createCompiler (baseOptions: CompilerOptions) {
+    /*
+        作用:
+              1、合并用户传入的option和vue自定义的option
+              2、将模板解析成AST树,并将ast树优化,并生成动态渲染函数render和静态渲染函数集合staticRenderFns,并收集错误警告提示信息
+              3、收集ast中节点类型为1和2中指令的属性值的错误信息，并指出错误位置
+              4、将包含ast树、render、staticRenderFns、errors、tips的对象输出
+    */
     function compile (
       template: string,
       options?: CompilerOptions
@@ -55,8 +71,9 @@ export function createCompilerCreator (baseCompile: Function): Function {
       }
       //执行createCompilerCreator()中传入的参数函数baseCompile(),将字符串模板和新对象finalOptions作为参数
       //传入该函数
+      // 该函数是将模板解析成AST树,并将ast树优化,并生成动态渲染函数render和静态渲染函数集合staticRenderFns
       const compiled = baseCompile(template, finalOptions)
-      //在非生产环境下将错误放入errors数组中
+      //在非生产环境下收集ast中节点类型为1和2中指令的属性值的错误信息，并指出错误位置
       if (process.env.NODE_ENV !== 'production') {
         errors.push.apply(errors, detectErrors(compiled.ast))
       }

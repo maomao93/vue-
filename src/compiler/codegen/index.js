@@ -61,21 +61,30 @@ export type CodegenResult = {
   render: string,
   staticRenderFns: Array<string>
 };
-
+/*
+    作用:
+          1、将AST树中的解析成表达式
+          2、将AST中的动态值变成字符串形式的动态渲染函数表达式
+          3、将AST中的静态值变成字符串形式的静态渲染函数表达式(数组形式)
+          4、将render(动态渲染函数表达式)和staticRenderFns(静态渲染函数表达式(数组形式))当成对象属性值输出
+*/
 export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
   // 生成一个CodegenState实例
   const state = new CodegenState(options)
-  //
+  //将AST中的值解析成对应的表达式，最后将表达式字符串输出
   const code = ast ? genElement(ast, state) : '_c("div")'
+  // 最后作为render函数表达式的值输出该AST树表达式
   return {
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
   }
 }
-
+/*
+  作用: 将优化过的ast树中的所有值进行处理生成对应的表达式字符串，最后将该字符串输出
+*/
 export function genElement (el: ASTElement, state: CodegenState): string {
   // 标签为纯静态根标签 &&不存在staticProcessed属性或staticProcessed属性值为false
   if (el.staticRoot && !el.staticProcessed) {
@@ -231,11 +240,10 @@ function genIfConditions (
 
   // v-if with v-once should generate code like (a)?_m(0):_m(1)
   function genTernaryExp (el) {
-    return altGen
-      ? altGen(el, state)
-      : el.once
-        ? genOnce(el, state)
-        : genElement(el, state)
+    return altGen ?
+      altGen(el, state)
+      :
+      el.once ? genOnce(el, state) : genElement(el, state)
   }
 }
 /*
@@ -278,8 +286,23 @@ export function genFor (
     '})'
 }
 /*
-  作用:
-        1、
+  作用:   处理所有数据，将其转化成表达式
+        1、处理directives的指令信息,并生成表达式字符串。存在model指令为el添加model属性信息对象;
+          存在v-text、v-html时为el的prop对象中添加原生属性(已将值解析成表达式)
+        2、解析key、ref、refInFor、pre、component、class和style
+        3、解析attrs,对属性值中的行分隔符、段落分隔符进行转义
+        4、解析props属性，将里面的原生属性值的行分隔符、段落分隔符进行转义,并放入domProps对象中
+        5、将events中的事件信息处理并放入on属性中
+        6、将nativeEvents中的事件信息处理并放入nativeOn属性中
+        7、处理存在slot属性 && 不存在slot-scope属性的标签,设置slot属性为el.slotTarget
+        8、处理子节点存在slot-scope属性的标签(存在scopedSlots),对所有插糟子元素进行处理,并作为scopedSlots属性值
+        9、对el的model属性处理生成model属性。
+        10、处理存在inlineTemplate属性的节点，第一个子元素类型为1时,将ast编译成渲染函数，否则报错。
+            最后生成`inlineTemplate:{
+              render:function(){${inlineRenderFns.render}},
+              staticRenderFns:[${inlineRenderFns.staticRenderFns.map(code => `function(){${code}}`).join(',')}]
+            }`
+        11、那些处理过的值都已转化成字符串，将这个字符串拼接生成字符串形式的key-value对象
 */
 export function genData (el: ASTElement, state: CodegenState): string {
   let data = '{'
@@ -358,34 +381,55 @@ export function genData (el: ASTElement, state: CodegenState): string {
   }
   // 将最末尾的,去掉，并添加}字符
   data = data.replace(/,$/, '') + '}'
-  // v-bind data wrap
+  // v-bind data wrap(可能在服务端)
   if (el.wrapData) {
     data = el.wrapData(data)
   }
-  // v-on data wrap
+  // v-on data wrap(可能在服务端)
   if (el.wrapListeners) {
     data = el.wrapListeners(data)
   }
   return data
 }
-
+/*
+    作用:
+          1、处理el的directives中的指令信息(不包括bind和on)
+          2、通过内置或用户自定义的指令函数处理指令，并在el上添加相应的属性信息
+          3、将处理好的directives属性输出
+*/
 function genDirectives (el: ASTElement, state: CodegenState): string | void {
+  // 缓存节点的指令信息
   const dirs = el.directives
+  // 不存在指令信息 直接return
   if (!dirs) return
   let res = 'directives:['
   let hasRuntime = false
   let i, l, dir, needRuntime
+  // 循环指令信息
   for (i = 0, l = dirs.length; i < l; i++) {
+    // 缓存单个指令信息
     dir = dirs[i]
     needRuntime = true
+    // 对相应的指令进行相应的指令函数处理并返回相应的结果缓存
     const gen: DirectiveFunction = state.directives[dir.name]
+    // 存在对应的指令处理函数
     if (gen) {
       // compile-time directive that manipulates AST.
       // returns true if it also needs a runtime counterpart.
+      // 节点信息，指令信息，警告收集函数(除了存在is属性的component组件和用户自定义的组件返回false，其他都为true)
       needRuntime = !!gen(el, dir, state.warn)
     }
+    /*
+        1、不存在相对应的指令处理函数                                             needRuntime = true
+        2、v-model指令处理的不是存在is属性的component组件 || 用户自定义的组件       needRuntime = true
+        3、指令不为v-text、v-html、v-cloak(v-bind和v-on不在el的directives属性中)  needRuntime = true
+    */
     if (needRuntime) {
+      // 设置hasRuntime变量为true
       hasRuntime = true
+      // 将指令信息拼成字符串放入res字符串中
+      // '{name: "标签名称",rawName:"指令名称",存在属性值?(value:(指令属性值),expression:"字符串形式的指令值") : '',
+      // 存在参数?(arg:"指令的参数") : "",存在修饰符?modifiers: 字符串化的指令对象'
       res += `{name:"${dir.name}",rawName:"${dir.rawName}"${
         dir.value ? `,value:(${dir.value}),expression:${JSON.stringify(dir.value)}` : ''
       }${
