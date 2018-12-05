@@ -9,7 +9,7 @@ const regexEscapeRE = /[-.*+?^${}()|[\]\/\\]/g
   作用: 将用户自定义的纯文本插入分隔符替换原本正则表达式中的纯文本插入分隔符
 */
 const buildRegex = cached(delimiters => {
-  // 将分隔符进行转义
+  // 将分隔符进行转义($& = 与正则相匹配的字符串)比如: ((替换成\(\(
   const open = delimiters[0].replace(regexEscapeRE, '\\$&')
   // 将分隔符进行转义
   const close = delimiters[1].replace(regexEscapeRE, '\\$&')

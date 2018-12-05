@@ -128,7 +128,7 @@ export function parseHTML (html, options){
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
-        //判断是否有兼容浏览器的注释比如<!--[if !IE]>--> 有则将其剔除并缓存剔除后的模板字符串然后退出当前循环
+        //判断是否有兼容浏览器的注释比如<![if !IE]> 有则将其剔除并缓存剔除后的模板字符串然后退出当前循环
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
           //条件注释节点将直接删除不做保存

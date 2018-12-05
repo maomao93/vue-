@@ -167,7 +167,7 @@ export function parse (
         //将ns属性添加到当前AST树对象上
         element.ns = ns
       }
-      //判断是(服务端)并且是style标签或者script标签
+      //判断是不(服务端)并且是style标签或者script标签
       if (isForbiddenTag(element) && !isServerRendering()) {
         //将forbidden属性添加到element对象上
         element.forbidden = true
@@ -404,7 +404,15 @@ function processRawAttrs (el) {
     el.plain = true
   }
 }
-
+/*
+    作用:
+          1、处理key属性
+          2、处理ref属性
+          3、处理slot属性
+          4、处理is属性和inline-template属性
+          5、处理静态和动态的style和class的
+          6、处理指令属性
+*/
 export function processElement (element: ASTElement, options: CompilerOptions) {
   processKey(element)
 
@@ -415,6 +423,7 @@ export function processElement (element: ASTElement, options: CompilerOptions) {
   processRef(element)
   processSlot(element)
   processComponent(element)
+  // 处理静态和动态的style和class的
   for (let i = 0; i < transforms.length; i++) {
     element = transforms[i](element, options) || element
   }
