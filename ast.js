@@ -58,7 +58,7 @@ let ast = {
   ref: '"table"',//ref属性值,
   refInFor: true,//该标签存在ref属性&&其父元素或自身存在v-for指令
   component: 'currentView',//存在is属性
-  inlineTemplate: true,//存在inline-template属性
+  inlineTemplate: true,//存在inline-template属性,表示将该节点变成该父组件的模板(也就是当成template)
   hasBindings: true,//存在v-、@、:的属性名
   events: {
     '!click': {
@@ -97,24 +97,28 @@ let ast = {
   styleBinding: '{ backgroundColor: green }',//动态样式
   staticClass: '"a b c"',//静态class
   classBinding: '{ a: true }',//动态class
-  plain: true,//1、没有key属性 && 没有任何属性 2、没有任何属性 && 不存在v-pre属性(前提子元素存在slot-scope属性)
+  plain: true,//1、没有任何属性(包括静态和动态)(前提子元素不存在slot-scope属性)
   isComment: true,//注释内容
   //以下是优化过后才有的
   static: true,
     /*包括兄弟元素
-      1、类型为3的标签
+      1、静态文本节点
       2、存在v-pre属性的
-      3、不存在任何指令属性、离其最近的祖元素是template标签的html保留标签、
-         存在静态class和style.
-      4、子元素的AST树对象的isStatic也是true((自定义组件标签 || template标签)&&不存在inline-template属性时,下面的子孙元素的ast树不存该属性)
+      3、不存在任何指令属性&&离其最近的祖元素是html保留标签&&存在静态class和style&&组元素不存在v-for指令.
+      4、子元素的AST树对象的static也是true(非html保留标签&&不存在inline-template属性时,下面的子孙元素的ast树不存该属性)
+      总结: 不会变化的
     */
   staticInFor: true,
     /*  前提:标签类型为1,不为则没有这个属性(包括兄弟元素)
-        1、(static属性为true || 存在v-once指令) && 不为根标签 && 子孙元素(包括其)存在v-for指令
+        1、(static属性为true || 存在v-once指令) && 不为根标签 && 祖节点存在v-for指令
         2、static属性为true &&(子元素长度大于0 || 子元素只有一个但是类型不为3)的子孙元素  的不存在该属性
+            1、子孙元素不会变化的 || 子孙不纯但是该标签存在v-once&&父元素存在v-for指令
     */
   staticRoot: true,
   /*前提: 标签类型为1
-        1、static属性为true &&(子元素长度大于0 || 子元素只有一个但是类型不为3)的元素(其子元素不存在该属性)
+        1、static属性为true &&(子元素长度大于0(类型不为2) || 子元素只有一个但是类型为1)的元素(其子元素不存在该属性)
+            <div (class=xx style=xx) || v-pre>
+              <div (class=xx style=xx) || v-pre></div>
+            </div>
   */
 }

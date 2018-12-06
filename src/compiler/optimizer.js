@@ -163,7 +163,7 @@ function isStatic (node: ASTNode): boolean {
     !node.if && !node.for && // not v-if or v-for or v-else  不存在v-if指令&&不存在v-for指令
     !isBuiltInTag(node.tag) && // not a built-in 标签名不为slot或component
     isPlatformReservedTag(node.tag) && // not a component 是html保留标签
-    !isDirectChildOfTemplateFor(node) && // 根标签或离其最近的祖元素是template
+    !isDirectChildOfTemplateFor(node) && // 根标签或离其最近的祖元素不是template || 组元素不存在v-for
     Object.keys(node).every(isStaticKey)// 存在type,tag,attrsList,attrsMap,plain,parent,children,attrs,staticClass,staticStyle属性
     // 如果没有静态class和style, node中将不存在staticClass,staticStyle属性
   ))
