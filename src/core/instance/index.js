@@ -21,7 +21,9 @@ initMixin(Vue)
 stateMixin(Vue)
 /*为Vue原型添加$on、$once、$off、$emit四个方法*/
 eventsMixin(Vue)
+/*为Vue原型添加_update、$forceUpdate、$destroy三个方法*/
 lifecycleMixin(Vue)
+/*为vue原型添加$nextTick、_render*/
 renderMixin(Vue)
 
 export default Vue

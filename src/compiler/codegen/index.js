@@ -134,7 +134,7 @@ export function genElement (el: ASTElement, state: CodegenState): string {
 // hoist static sub-trees out
 /*
   作用:
-        1、将onceProcessed属性设置为true。
+        1、将staticProcessed属性设置为true。
         2、将`with(this){return ${genElement(el, state)}}`字符放入state.staticRenderFns数组中。
         3、返回`_m(${state.staticRenderFns.length - 1}${el.staticInFor ? ',true' : ''})`字符串。
 */

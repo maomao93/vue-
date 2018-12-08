@@ -20,10 +20,13 @@ export function initRender (vm: Component) {
   vm._staticTrees = null // v-once cached trees
   //缓存$options
   const options = vm.$options
-  //缓存父组件
+  //缓存当前组件一些信息
   const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
+  // 缓存当前父组件实例
   const renderContext = parentVnode && parentVnode.context
+  // _renderChildren: 插糟替换的节点(前提该节点不存在slot-scope属性)
   vm.$slots = resolveSlots(options._renderChildren, renderContext)
+  // 生一个冻结的空对象
   vm.$scopedSlots = emptyObject
   // bind the createElement fn to this instance
   // so that we get proper render context inside it.
@@ -71,10 +74,12 @@ export function renderMixin (Vue: Class<Component>) {
 
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
+    // 导出render渲染函数和_parentVnode函数
     const { render, _parentVnode } = vm.$options
 
     // reset _rendered flag on slots for duplicate slot check
     if (process.env.NODE_ENV !== 'production') {
+      // 在非生产环境下
       for (const key in vm.$slots) {
         // $flow-disable-line
         vm.$slots[key]._rendered = false

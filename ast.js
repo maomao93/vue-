@@ -32,6 +32,10 @@ let ast = {
     {name: 'muted', value: 'mutedData'}// video标签的muted属性
     /*静态属性除了video标签的muted属性，其他都放在attrs中*/
   ],//原生属性
+  for: 'lists',//被循环的数据
+  alias: 'list',//循环出来的单个数据
+  iterator1: 'key',//key名或下标
+  iterator2: 'index' || '',//第三个参数
   pre: true,//存在v-pre指令
   ns: 'svg' || 'math',//只有svg标签和math标签才有 为了解决IE兼容问题
   forbidden: true,//标签为style || 类型为空或不为'text/javascript'的script标签
@@ -116,9 +120,11 @@ let ast = {
     */
   staticRoot: true,
   /*前提: 标签类型为1
-        1、static属性为true &&(子元素长度大于0(类型不为2) || 子元素只有一个但是类型为1)的元素(其子元素不存在该属性)
+        1、static属性为true &&(子元素长度大于1(类型不为2) || 子元素只有一个但是类型为1)的元素(其子元素不存在该属性)
             <div (class=xx style=xx) || v-pre>
               <div (class=xx style=xx) || v-pre></div>
             </div>
   */
+  // 一下均为转化成渲染表达式
+  staticProcessed: true,//表示已经静态根标签转化为表达式
 }

@@ -20,7 +20,11 @@ import {
 
 export let activeInstance: any = null
 export let isUpdatingChildComponent: boolean = false
-
+/*
+  作用: 初始化一些数据，比如$children、$refs、_watcher、$root、
+     $parent、_inactive、_directInactive、_isMounted 、_isDestroyed、
+      _isBeingDestroyed
+*/
 export function initLifecycle (vm: Component) {
   //缓存合并处理过后的$options
   const options = vm.$options

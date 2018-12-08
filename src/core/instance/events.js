@@ -8,7 +8,11 @@ import {
   formatComponentName
 } from '../util/index'
 import { updateListeners } from '../vdom/helpers/index'
-
+/*
+  作用:
+        1、初始化_events对象和_hasHookEvent变量
+        2、更新父组件传递下来的监听事件，将已经不存在移除,将原不存在的事件函数重写&&赋值fns属性为传递下来的事件
+*/
 export function initEvents (vm: Component) {
   //当前实例的_events赋值为原型为空的空对象
   vm._events = Object.create(null)
@@ -22,7 +26,9 @@ export function initEvents (vm: Component) {
 }
 
 let target: any
-
+/*
+  添加监听事件
+*/
 function add (event, fn, once) {
   if (once) {
     target.$once(event, fn)
@@ -30,17 +36,21 @@ function add (event, fn, once) {
     target.$on(event, fn)
   }
 }
-
+/*
+  移除事件
+*/
 function remove (event, fn) {
   target.$off(event, fn)
 }
-
+/*
+   作用: 为实例添加或移除父组件作用在该组件上的监听事件
+*/
 export function updateComponentListeners (
   vm: Component,
   listeners: Object,
   oldListeners: ?Object
 ) {
-  target = vm
+  target = vm // 确定需要移除或添加的组件
   updateListeners(listeners, oldListeners || {}, add, remove, vm)
   target = undefined
 }
