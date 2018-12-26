@@ -69,14 +69,18 @@ export default class VNode {
     return this.componentInstance
   }
 }
-
+/*
+    作用: 创建一个空节点，或者说是没有内容的注释节点
+*/
 export const createEmptyVNode = (text: string = '') => {
   const node = new VNode()
   node.text = text
   node.isComment = true
   return node
 }
-
+/*
+  作用: 创建一个文本节点
+*/
 export function createTextVNode (val: string | number) {
   return new VNode(undefined, undefined, undefined, String(val))
 }
@@ -87,23 +91,23 @@ export function createTextVNode (val: string | number) {
 // on their elm reference.
 export function cloneVNode (vnode: VNode): VNode {
   const cloned = new VNode(
-    vnode.tag,
-    vnode.data,
-    vnode.children,
-    vnode.text,
-    vnode.elm,
-    vnode.context,
-    vnode.componentOptions,
+    vnode.tag,//标签名
+    vnode.data,//标签属性
+    vnode.children,//子节点集合
+    vnode.text,//节点文本
+    vnode.elm,//当前虚拟节点对应的真实dom节点
+    vnode.context,// 编译作用域
+    vnode.componentOptions,// 创建组件实例时的options
     vnode.asyncFactory
   )
-  cloned.ns = vnode.ns
-  cloned.isStatic = vnode.isStatic
-  cloned.key = vnode.key
-  cloned.isComment = vnode.isComment
-  cloned.fnContext = vnode.fnContext
+  cloned.ns = vnode.ns//节点的namespace( 名称空间)
+  cloned.isStatic = vnode.isStatic// 是否是静态节点
+  cloned.key = vnode.key//节点标识，有利于patch优化
+  cloned.isComment = vnode.isComment //是否为注释节点
+  cloned.fnContext = vnode.fnContext //函数化组件的作用域，即全局上下文
   cloned.fnOptions = vnode.fnOptions
   cloned.fnScopeId = vnode.fnScopeId
   cloned.asyncMeta = vnode.asyncMeta
-  cloned.isCloned = true
+  cloned.isCloned = true //为克隆节点
   return cloned
 }

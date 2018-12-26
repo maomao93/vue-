@@ -28,6 +28,12 @@ export function simpleNormalizeChildren (children: any) {
 // e.g. <template>, <slot>, v-for, or when the children is provided by user
 // with hand-written render functions / JSX. In such cases a full normalization
 // is needed to cater to all possible types of children values.
+/*
+  作用:
+        1、当children参数为string、number、symbol、boolean类型时,输出一个[文本节点]
+        2、当children参数为数组时,
+        3、不满足以上时返回undefined
+*/
 export function normalizeChildren (children: any): ?Array<VNode> {
   return isPrimitive(children)
     ? [createTextVNode(children)]
@@ -35,14 +41,21 @@ export function normalizeChildren (children: any): ?Array<VNode> {
       ? normalizeArrayChildren(children)
       : undefined
 }
-
+/*
+    作用: 判断(节点和节点文本内容是否为undefined || null)&&节点是否不为注释节点
+*/
 function isTextNode (node): boolean {
   return isDef(node) && isDef(node.text) && isFalse(node.isComment)
 }
 
+/*
+    作用:
+*/
 function normalizeArrayChildren (children: any, nestedIndex?: string): Array<VNode> {
+  // 初始化空数组
   const res = []
   let i, c, lastIndex, last
+  // 循环children数组
   for (i = 0; i < children.length; i++) {
     c = children[i]
     if (isUndef(c) || typeof c === 'boolean') continue

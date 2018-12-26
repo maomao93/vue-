@@ -25,32 +25,47 @@ const ALWAYS_NORMALIZE = 2
 
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
+/*
+    作用:
+          1、将参数错位情况进行处理并重新设置值
+          2、将重新设置的值传入_createElement函数中并输出该函数
+*/
 export function createElement (
-  context: Component,
-  tag: any,
-  data: any,
-  children: any,
+  context: Component,//当前组件实例
+  tag: any,//标签名
+  data: any,//静态class、事件等等
+  children: any,//子组件或子节点
   normalizationType: any,
   alwaysNormalize: boolean
 ): VNode | Array<VNode> {
+  // 判断data是否为数组 || string、number、symbol、boolean类型
+  // 出现这种情况是将子节点放在了第二个参数
   if (Array.isArray(data) || isPrimitive(data)) {
+    // 将子节点赋值给normalizationType
     normalizationType = children
+    // 将data赋值给children
     children = data
+    // 将data赋值为undefined
     data = undefined
   }
+  // 判断alwaysNormalize参数是否为true
   if (isTrue(alwaysNormalize)) {
+    // 将normalizationType参数设置为2
     normalizationType = ALWAYS_NORMALIZE
   }
+  // 输出_createElement函数并传入处理过的参数
   return _createElement(context, tag, data, children, normalizationType)
 }
 
 export function _createElement (
-  context: Component,
-  tag?: string | Class<Component> | Function | Object,
-  data?: VNodeData,
-  children?: any,
+  context: Component,//当前组件实例
+  tag?: string | Class<Component> | Function | Object,// 标签名 || 组件 || 函数 || 对象
+  data?: VNodeData, // undefined || 静态class、事件等等
+  children?: any,// 子节点
   normalizationType?: number
 ): VNode | Array<VNode> {
+  // 当data不为undefined || null && 该数据是观察者数据 收集警告信息‘避免使用观察到的数据对象作为vnode数据’,
+  // 输出一个文本为空的注释节点或空节点
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
@@ -60,17 +75,21 @@ export function _createElement (
     return createEmptyVNode()
   }
   // object syntax in v-bind
+  // 当data不为undefined || null  && data.is属性(组件名)不为undefined || null时，设置组件名为标签名
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
+  // 不存在标签名时,输出一个文本为空的注释节点或空节点
   if (!tag) {
     // in case of component :is set to falsy value
     return createEmptyVNode()
   }
   // warn against non-primitive key
+  // 非生产环境下 && (data不为undefined || null) && (data.key不为undefined || null) && data.key不为string、number、symbol、boolean类型时
   if (process.env.NODE_ENV !== 'production' &&
     isDef(data) && isDef(data.key) && !isPrimitive(data.key)
   ) {
+    // 在非weex环境下 || @binding属性不在data.key中时提示'key属性请用string或number类型的值,避免使用非原始值'
     if (!__WEEX__ || !('@binding' in data.key)) {
       warn(
         'Avoid using non-primitive value as key, ' +
@@ -80,6 +99,8 @@ export function _createElement (
     }
   }
   // support single function children as default scoped slot
+  // 子节点为数组形式 && 第一个子节点是函数形式的时,设置data为原data或空对象,
+  // 设置data.scopedSlot对象中的default属性为第一个子节点,初始化children数据为空数组
   if (Array.isArray(children) &&
     typeof children[0] === 'function'
   ) {
@@ -87,6 +108,7 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+  // 当时开发者调用$createElement这个api时,
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
