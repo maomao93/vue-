@@ -108,9 +108,10 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
-  // 当时开发者调用$createElement这个api时,
+  // 当时开发者调用$createElement这个api时(可能是jsx、单文件组件等等),生成一个处理过的子节点数组结合
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
+    //
   } else if (normalizationType === SIMPLE_NORMALIZE) {
     children = simpleNormalizeChildren(children)
   }
