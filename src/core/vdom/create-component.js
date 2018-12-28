@@ -97,21 +97,26 @@ const componentVNodeHooks = {
 }
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
-
+/*
+  作用:
+        1、当前组件类Ctor为undefined时结束该函数
+*/
 export function createComponent (
-  Ctor: Class<Component> | Function | Object | void,
-  data: ?VNodeData,
-  context: Component,
-  children: ?Array<VNode>,
-  tag?: string
+  Ctor: Class<Component> | Function | Object | void,//当前组件类
+  data: ?VNodeData,//class或事件
+  context: Component,//当前组件实例
+  children: ?Array<VNode>,//子节点集合
+  tag?: string//组件标签名
 ): VNode | Array<VNode> | void {
+  // 当前组件类为undefined时结束该函数
   if (isUndef(Ctor)) {
     return
   }
-
+  // 获取vue函数的一些基本属性
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  //对象是否不为null并且类型为object
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }

@@ -735,6 +735,12 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
  */
+/*
+  作用:
+        1、检验组件名和标签并给予相应冲突的警告。
+        2、规范化props、规范化Inject、规范化Directives
+        3、将mixins合并进实例
+*/
 export function mergeOptions (
   parent: Object, //构造函数自带的options
   child: Object, //传入的参数options
@@ -815,30 +821,48 @@ const defaultStrat = function (parentVal: any, childVal: any): any {
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
  */
+/*
+  作用:
+        1、读取options[type]中的id属性值
+        2、读取options[type]中的驼峰写法id属性值
+        3、读取options[type]中的(首字母大写和驼峰写法)id属性值
+        4、读取options[type]原型链中的id各个形式的属性值
+        5、将读取出的属性值 || undefined输出
+*/
 export function resolveAsset (
   options: Object,
-  type: string,
-  id: string,
+  type: string,//类型
+  id: string,//标志
   warnMissing?: boolean
 ): any {
   /* istanbul ignore if */
+  // 判断id参数不为string类型时直接结束函数
   if (typeof id !== 'string') {
     return
   }
+  // 获取options中type类型的数据
   const assets = options[type]
   // check local registration variations first
+  // 当id参数存在于options[type]对象本身而不是继承自原型链时,直接返回options[type][id]属性值
   if (hasOwn(assets, id)) return assets[id]
+  // 将id参数转换成驼峰写法
   const camelizedId = camelize(id)
+  // 判断转换成驼峰写法后的id存在于options[type]对象本身而不是继承自原型链时,直接返回options[type][camelizedId]属性值
   if (hasOwn(assets, camelizedId)) return assets[camelizedId]
+  // 将转换成驼峰写后id参数的首字母改成大写的
   const PascalCaseId = capitalize(camelizedId)
+  // 判断转换成驼峰写法和首字母大写后的id存在于options[type]对象本身而不是继承自原型链时,直接返回options[type][PascalCaseId]属性值
   if (hasOwn(assets, PascalCaseId)) return assets[PascalCaseId]
   // fallback to prototype chain
+  // 获取原型链中id属性各种形式的属性值
   const res = assets[id] || assets[camelizedId] || assets[PascalCaseId]
+  // 在非生产环境下 && 存在warnMissing && 没有获取到id属性值时收集警告'在options对象中不能成功读取type属性对象中的id属性值'
   if (process.env.NODE_ENV !== 'production' && warnMissing && !res) {
     warn(
       'Failed to resolve ' + type.slice(0, -1) + ': ' + id,
       options
     )
   }
+  // 输出res || undefined
   return res
 }

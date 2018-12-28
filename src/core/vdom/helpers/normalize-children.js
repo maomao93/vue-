@@ -15,6 +15,9 @@ import { isFalse, isTrue, isDef, isUndef, isPrimitive } from 'shared/util'
 // normalization is needed - if any child is an Array, we flatten the whole
 // thing with Array.prototype.concat. It is guaranteed to be only 1-level deep
 // because functional components already normalize their own children.
+/*
+    作用: 将children参数数组的某一项为数组时返回一个全新的children数组否则返回原children参数
+*/
 export function simpleNormalizeChildren (children: any) {
   for (let i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {

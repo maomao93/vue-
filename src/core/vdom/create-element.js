@@ -111,20 +111,26 @@ export function _createElement (
   // 当时开发者调用$createElement这个api时(可能是jsx、单文件组件等等),生成一个处理过的子节点数组结合
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
-    //
+    // 当normalizationType参数为1时,生成一个新的children数组或原children数组
   } else if (normalizationType === SIMPLE_NORMALIZE) {
     children = simpleNormalizeChildren(children)
   }
   let vnode, ns
+  // 当标签名类型为string时
   if (typeof tag === 'string') {
     let Ctor
+    // 当前组件实例的ns属性 || 判断标签是否为sug或math
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+    // 判断标签名是否为html保留标签或svg标签
     if (config.isReservedTag(tag)) {
       // platform built-in elements
+      // 创建该标签的VNode实例
       vnode = new VNode(
+        // weex环境下将标签中的'weex:'去掉,不是则返回原标签
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
+      // 读取当前实例中的$options中的components属性中的该组件的注册函数并且不为undefined时
     } else if (isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
