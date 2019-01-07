@@ -599,7 +599,7 @@ export function validateComponentName (name: string) {
       'and must start with a letter.'
     )
   }
-  /*不与slot,component字段名冲突*/  /*不与html标签和svg标签名冲突*/
+  /*与slot,component字段名冲突*/  /*与html标签和svg标签名冲突*/
   if (isBuiltInTag(name) || config.isReservedTag(name)) {
     warn(
       'Do not use built-in or reserved HTML elements as component ' +
@@ -773,6 +773,7 @@ export function mergeOptions (
       parent = mergeOptions(parent, child.mixins[i], vm)
     }
   }
+  /* 优先级: extend生成的构造函数 > mixins > extends */
   const options = {}
   let key
   /*
@@ -782,6 +783,7 @@ export function mergeOptions (
     执行这个返回的函数 && 将这个函数返回的值赋值给options[key]
   */
   for (key in parent) {
+    // 不管前面mixins || extends是否存在最后都会被option中的属性覆盖
     mergeField(key)
   }
   /*

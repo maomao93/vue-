@@ -39,7 +39,8 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment. //内部组件选项需要特殊处理。
       initInternalComponent(vm, options)//为当前组件实例的$option赋值
     } else {
-      //合并默认的一些option,并且格式化option中的一些属性，使其符合要求，并对不合理的警告提示
+      //合并默认的一些option,并且格式化option中的一些属性，使其符合要求，并对不合理的警告提示，
+      // 比如规范化props、规范化Inject、规范化Directives等等
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},

@@ -118,6 +118,7 @@ export function createComponent (
   // plain options object: turn it into a constructor
   //对象是否不为null并且类型为object
   if (isObject(Ctor)) {
+    // 继承当前组件构造函数的属性并且生成一个创建组件的构造函数
     Ctor = baseCtor.extend(Ctor)
   }
 

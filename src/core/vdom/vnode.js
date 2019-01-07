@@ -38,35 +38,35 @@ export default class VNode {
     componentOptions?: VNodeComponentOptions,
     asyncFactory?: Function
   ) {
-    this.tag = tag
-    this.data = data
-    this.children = children
-    this.text = text
-    this.elm = elm
-    this.ns = undefined
-    this.context = context
-    this.fnContext = undefined
-    this.fnOptions = undefined
-    this.fnScopeId = undefined
-    this.key = data && data.key
-    this.componentOptions = componentOptions
-    this.componentInstance = undefined
-    this.parent = undefined
-    this.raw = false
-    this.isStatic = false
-    this.isRootInsert = true
-    this.isComment = false
-    this.isCloned = false
-    this.isOnce = false
-    this.asyncFactory = asyncFactory
-    this.asyncMeta = undefined
-    this.isAsyncPlaceholder = false
+    this.tag = tag //设置标签
+    this.data = data //设置数据(事件信息、props信息等等)
+    this.children = children //缓存子组件
+    this.text = text //当前节点文本
+    this.elm = elm //当前节点对应的真实DOM节点
+    this.ns = undefined //当前节点命名空间
+    this.context = context //当前节点上下文
+    this.fnContext = undefined //函数化组件上下文
+    this.fnOptions = undefined //函数化组件配置项
+    this.fnScopeId = undefined //函数化组件ScopeId
+    this.key = data && data.key //子节点key属性
+    this.componentOptions = componentOptions //组件配置项
+    this.componentInstance = undefined //组件实例
+    this.parent = undefined //当前节点父节点
+    this.raw = false //是否为原生HTML或只是普通文本
+    this.isStatic = false //静态节点标志 keep-alive
+    this.isRootInsert = true //是否作为根节点插入
+    this.isComment = false //是否为注释节点
+    this.isCloned = false //是否为克隆节点
+    this.isOnce = false //是否为v-once节点
+    this.asyncFactory = asyncFactory //异步工厂方法
+    this.asyncMeta = undefined //异步Meta
+    this.isAsyncPlaceholder = false //是否为异步占位
   }
 
   // DEPRECATED: alias for componentInstance for backwards compat.
   /* istanbul ignore next */
   get child (): Component | void {
-    return this.componentInstance
+    return this.componentInstance //读取函数返回当前组件实例
   }
 }
 /*
@@ -89,6 +89,10 @@ export function createTextVNode (val: string | number) {
 // used for static nodes and slot nodes because they may be reused across
 // multiple renders, cloning them avoids errors when DOM manipulations rely
 // on their elm reference.
+/*
+  作用:
+        1、克隆节点
+*/
 export function cloneVNode (vnode: VNode): VNode {
   const cloned = new VNode(
     vnode.tag,//标签名
@@ -98,16 +102,16 @@ export function cloneVNode (vnode: VNode): VNode {
     vnode.elm,//当前虚拟节点对应的真实dom节点
     vnode.context,// 编译作用域
     vnode.componentOptions,// 创建组件实例时的options
-    vnode.asyncFactory
+    vnode.asyncFactory //异步工厂方法
   )
-  cloned.ns = vnode.ns//节点的namespace( 名称空间)
-  cloned.isStatic = vnode.isStatic// 是否是静态节点
-  cloned.key = vnode.key//节点标识，有利于patch优化
+  cloned.ns = vnode.ns //节点的namespace( 名称空间)
+  cloned.isStatic = vnode.isStatic //是否是静态节点
+  cloned.key = vnode.key //节点标识，有利于patch优化
   cloned.isComment = vnode.isComment //是否为注释节点
   cloned.fnContext = vnode.fnContext //函数化组件的作用域，即全局上下文
-  cloned.fnOptions = vnode.fnOptions
-  cloned.fnScopeId = vnode.fnScopeId
-  cloned.asyncMeta = vnode.asyncMeta
+  cloned.fnOptions = vnode.fnOptions //函数化组件配置项
+  cloned.fnScopeId = vnode.fnScopeId //函数化组件ScopeId
+  cloned.asyncMeta = vnode.asyncMeta //异步Meta
   cloned.isCloned = true //为克隆节点
   return cloned
 }
