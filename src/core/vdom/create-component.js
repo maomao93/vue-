@@ -183,6 +183,7 @@ export function createComponent (
   }
 
   // extract props
+  // 将构造函数的options.props中的属性值赋值为(data中的prop或attrs对应的属性值 || undefined)
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
