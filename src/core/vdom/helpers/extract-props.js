@@ -17,13 +17,19 @@ export function extractPropsFromVNodeData (
   // we are only extracting raw values here.
   // validation and default values are handled in the child
   // component itself.
+
+  // 缓存options中props属性
   const propOptions = Ctor.options.props
+  // 不存在时return
   if (isUndef(propOptions)) {
     return
   }
   const res = {}
+  // 缓存data对象中的attrs和props属性
   const { attrs, props } = data
+  // 当存在attrs || props时
   if (isDef(attrs) || isDef(props)) {
+    // 循环构造函数的options.props对象
     for (const key in propOptions) {
       const altKey = hyphenate(key)
       if (process.env.NODE_ENV !== 'production') {

@@ -101,7 +101,11 @@ export function initInternalComponent (vm: Component, options: InternalComponent
     opts.staticRenderFns = options.staticRenderFns //option中静态render()集合
   }
 }
-
+/*
+    作用:
+          1、获取构造函数的options对象
+          2、存在继承函数时输出处理过后的options对象,该对象进行过更新(如果原先的继承函数的构造函数的options有变动)
+*/
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   /*Vue.options = {
     components: {
@@ -116,35 +120,54 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
     filters: Object.create(null),
     _base: Vue
   }*/
+  // 获取构造函数的options参数
   let options = Ctor.options
+  // 当前构造函数有继承函数时
   if (Ctor.super) {
+    // 获取构造函数的继承函数的构造函数的options(这个是现在继承函数的构造函数的)
     const superOptions = resolveConstructorOptions(Ctor.super)
+    // 缓存构造函数的继承函数构造函数的options(这个是当时创建该构造函数的保存的)
     const cachedSuperOptions = Ctor.superOptions
+    // 当两者不一样时,说明继承函数有变化
     if (superOptions !== cachedSuperOptions) {
       // super option changed,
       // need to resolve new options.
+      // 设置新的superOptions属性
       Ctor.superOptions = superOptions
       // check if there are any late-modified/attached options (#4976)
+      // 对构造函数有变化的options进行处理合并和去掉重复的
       const modifiedOptions = resolveModifiedOptions(Ctor)
       // update base extend options
+      // 存在options时更新基本扩展选项(生成构造函数时传入的options)
       if (modifiedOptions) {
         extend(Ctor.extendOptions, modifiedOptions)
       }
+      // 合并现在继承函数的构造函数的options和现在生成构造函数时传入的options
       options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions)
+      // 存在组件名时,设置options的components[组件名]为当前构造函数
       if (options.name) {
         options.components[options.name] = Ctor
       }
     }
   }
+  // 将options输出
   return options
 }
-
+/*
+  作用:
+        1、对构造函数有变化的options进行处理合并和去掉重复的
+*/
 function resolveModifiedOptions (Ctor: Class<Component>): ?Object {
   let modified
+  // 缓存构造函数当前的options
   const latest = Ctor.options
+  // 缓存生成该构造函数是传入的参数
   const extended = Ctor.extendOptions
+  // 缓存继承函数的options和生成该构造函数是传入的options合并的options
   const sealed = Ctor.sealedOptions
+  // 循环构造函数的options
   for (const key in latest) {
+    // options有变化时,对其进行处理合并和去掉重复的
     if (latest[key] !== sealed[key]) {
       if (!modified) modified = {}
       modified[key] = dedupe(latest[key], extended[key], sealed[key])
@@ -152,22 +175,31 @@ function resolveModifiedOptions (Ctor: Class<Component>): ?Object {
   }
   return modified
 }
-
+/*
+    作用:
+          1、对生命周期函数和其他属性分别处理避免重复叠加属性
+*/
 function dedupe (latest, extended, sealed) {
   // compare latest and sealed to ensure lifecycle hooks won't be duplicated
   // between merges
+  // options中的属性值为数组时(生命周期函数可以多个并存)
   if (Array.isArray(latest)) {
     const res = []
+    // 将原先合并的options的生命周期函数变为数组
     sealed = Array.isArray(sealed) ? sealed : [sealed]
+    // 将生成构造函数传入的options的生命周期函数变为数组
     extended = Array.isArray(extended) ? extended : [extended]
+    // 循环现在的生命周期函数数组
     for (let i = 0; i < latest.length; i++) {
       // push original options and not sealed options to exclude duplicated options
+      // 生成构造函数传入的options中存在该函数时 || 原先合并的options不存在时(确保不填加重复的)
       if (extended.indexOf(latest[i]) >= 0 || sealed.indexOf(latest[i]) < 0) {
         res.push(latest[i])
       }
     }
     return res
   } else {
+    // 返回当前options中的属性值
     return latest
   }
 }

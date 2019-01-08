@@ -21,7 +21,12 @@ export function initExtend (Vue: GlobalAPI) {
   /**
    * Class inheritance
    */
-  // 作用: 继承组件并且创建组件的构造函数用的
+  /*
+      作用:
+          1、生成VueComponent构造函数
+          2、继承并合并当前组件的构造函数的(属性、options)为该构造函数的属性
+          3、将该构造函数输出
+  */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
     const Super = this//获取实例
