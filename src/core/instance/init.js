@@ -61,7 +61,7 @@ export function initMixin (Vue: Class<Component>) {
     initLifecycle(vm)
     // 初始化父组件传递下来的监听事件&&初始化事件收集器_events对象和_hasHookEvent变量
     initEvents(vm)
-    //
+    // 初始化render以及组件构造函数
     initRender(vm)
     callHook(vm, 'beforeCreate') //执行实例的beforeCreate函数或数组中的函数
     initInjections(vm) // resolve injections before data/props

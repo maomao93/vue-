@@ -64,6 +64,12 @@ export function updateComponentListeners (
 */
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
+  /*
+    作用:
+          1、传入的事件名可以是数组
+          2、为实例添加监听事件
+          3、监听函数名存在hook:时,将_hasHookEvent设置为true,作用: 监听子组件的生命周期执行情况
+  */
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
     //判断event是否为数组
@@ -84,7 +90,10 @@ export function eventsMixin (Vue: Class<Component>) {
     }
     return vm
   }
-
+  /*
+    作用:
+          1、只执行一次该fn，在执行一次后$off掉在实例中的该函数
+  */
   Vue.prototype.$once = function (event: string, fn: Function): Component {
     const vm: Component = this
     function on () {
@@ -95,10 +104,15 @@ export function eventsMixin (Vue: Class<Component>) {
     vm.$on(event, on)
     return vm
   }
-
+  /*
+    作用:
+          1、当没传参数时清空该实例的所有监听事件
+          2、对传空fn的事件名值设置为null
+          3、删除与fn对应的在_events[event]集合中的函数
+  */
   Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
     const vm: Component = this
-    // all
+    // all 当没传一个参数时清空该实例的监听函数并返回该实例
     if (!arguments.length) {
       vm._events = Object.create(null)
       return vm
@@ -110,19 +124,24 @@ export function eventsMixin (Vue: Class<Component>) {
       }
       return vm
     }
-    // specific event
+    // specific event 缓存事件
     const cbs = vm._events[event]
+    // 不存在时return该实例
     if (!cbs) {
       return vm
     }
+    // 当没有传事件函数时, 设置该监听事件名的值为null,return该实例
     if (!fn) {
       vm._events[event] = null
       return vm
     }
+    // 传了事件函数时
     if (fn) {
       // specific handler
       let cb
+      // 获取该事件名在实例中的集合
       let i = cbs.length
+      // 通过遍历的形式找出与在集合中相同的(传入的参数函数),将其删除
       while (i--) {
         cb = cbs[i]
         if (cb === fn || cb.fn === fn) {
@@ -133,11 +152,17 @@ export function eventsMixin (Vue: Class<Component>) {
     }
     return vm
   }
-
+  /*
+      作用:
+            1、对不规范的写法进行提示
+            2、执行该监听函数对应的函数
+  */
   Vue.prototype.$emit = function (event: string): Component {
     const vm: Component = this
     if (process.env.NODE_ENV !== 'production') {
+      // 将事件名转化成小写
       const lowerCaseEvent = event.toLowerCase()
+      // 当转化过的事件名与原先不符时 && 实例中不存在改转换后的事件
       if (lowerCaseEvent !== event && vm._events[lowerCaseEvent]) {
         tip(
           `Event "${lowerCaseEvent}" is emitted in component ` +
@@ -148,12 +173,17 @@ export function eventsMixin (Vue: Class<Component>) {
         )
       }
     }
+    // 缓存实例中的该监听事件
     let cbs = vm._events[event]
     if (cbs) {
+      // 缓存该监听事件集合 || 单个
       cbs = cbs.length > 1 ? toArray(cbs) : cbs
+      // 截取事件名后面的参数
       const args = toArray(arguments, 1)
+      // 循环该事件集合
       for (let i = 0, l = cbs.length; i < l; i++) {
         try {
+          // 执行该事件,并传入参数
           cbs[i].apply(vm, args)
         } catch (e) {
           handleError(e, vm, `event handler for "${event}"`)

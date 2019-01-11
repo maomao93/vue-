@@ -3,7 +3,11 @@
 import { hasOwn } from 'shared/util'
 import { warn, hasSymbol } from '../util/index'
 import { defineReactive, toggleObserving } from '../observer/index'
-
+/*
+    作用:
+          1、获取当前实例的provide
+          2、设置实例的_provided为provide
+*/
 export function initProvide (vm: Component) {
   const provide = vm.$options.provide
   if (provide) {
@@ -13,7 +17,12 @@ export function initProvide (vm: Component) {
   }
 }
 
-//将inject的属性添加到实例上
+/*
+    作用:将inject的属性添加到实例上
+          1、获取处理过后的inject对象
+          2、将对象中的属性添加到实例上方便获取值,但是不创建Observe实例，只进行拦截
+             操作,并在改变这些属性值时提示该属性为只读属性,避免修改值
+*/
 export function initInjections (vm: Component) {
   //缓存这个初始化inject后的新对象
   const result = resolveInject(vm.$options.inject, vm)
@@ -44,7 +53,12 @@ export function initInjections (vm: Component) {
   }
 }
 
-//初始化实例的injects生成一个新对象，并将其return出来
+/*
+    作用:初始化实例的injects生成一个新对象，并将其return出来
+          1、获取当前组件中inject[key]的from属性值,并从存在provide属性的祖先组件中获取相应的属性值
+          2、当没有时获取用户设定的默认值,默认值也没有时提示警告信息该key没有找到
+          3、将处理后的对象输出
+*/
 export function resolveInject (inject: any, vm: Component): ?Object {
   //实例的$options中有inject属性
   if (inject) {

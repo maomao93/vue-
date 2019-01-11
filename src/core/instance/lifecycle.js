@@ -108,14 +108,28 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // updated hook is called by the scheduler to ensure that children are
     // updated in a parent's updated hook.
   }
-
+  /*
+    作用: 重新渲染一次该实例
+  */
   Vue.prototype.$forceUpdate = function () {
     const vm: Component = this
     if (vm._watcher) {
       vm._watcher.update()
     }
   }
-
+  /*
+     作用:
+          1、该实例正在销毁时,return
+          2、执行销毁前的生命周期函数beforeDestroy
+          3、设置_isBeingDestroyed属性为true,表示正在销毁中
+          4、存在父组件&&父组件还未销毁时&&父组件不为抽象组件时，将该组件从父组件的子集合中移除
+          5、解除该实例观察者对属性的观察
+          6、清空该实例中的所有属性观察者
+          7、实例序号-1
+          8、设置_isDestroyed为true,表示已销毁
+          9、调用当前渲染树上的销毁钩子、执行destroyed钩子函数、清空所有实例侦听器、
+            设置节点的__vue__为null、清空组件节点的父级(释放循环引用)
+  */
   Vue.prototype.$destroy = function () {
     const vm: Component = this
     if (vm._isBeingDestroyed) {
@@ -137,23 +151,25 @@ export function lifecycleMixin (Vue: Class<Component>) {
       vm._watchers[i].teardown()
     }
     // remove reference from data ob
+    // 从数据ob中删除引用
     // frozen object may not have observer.
+    // 被冻结的对象可能没有观察者。
     if (vm._data.__ob__) {
       vm._data.__ob__.vmCount--
     }
     // call the last hook...
     vm._isDestroyed = true
-    // invoke destroy hooks on current rendered tree
+    // invoke destroy hooks on current rendered tree 调用当前渲染树上的销毁钩子
     vm.__patch__(vm._vnode, null)
-    // fire destroyed hook
+    // fire destroyed hook 执行destroyed钩子函数
     callHook(vm, 'destroyed')
-    // turn off all instance listeners.
+    // turn off all instance listeners. 清空所有实例侦听器
     vm.$off()
-    // remove __vue__ reference
+    // remove __vue__ reference 设置节点的__vue__为null
     if (vm.$el) {
       vm.$el.__vue__ = null
     }
-    // release circular reference (#6759)
+    // release circular reference (#6759) 清空组件节点的父级
     if (vm.$vnode) {
       vm.$vnode.parent = null
     }

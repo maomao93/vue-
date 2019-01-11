@@ -104,7 +104,14 @@ const hooksToMerge = Object.keys(componentVNodeHooks)
         3、当前组件类Ctor不为函数时return，并提示无效的组件定义
         4、对异步组件加载方式进行处理，对相应的状态做相应的处理，最后返回相应状态的构造函数,
           如果没有返回值则return空节点，并将参数设置为节点的asyncFactory和asyncMeta属性值
-        5、
+        5、对构造函数的options进行更新,当其存在继承函数时
+        6、存在model属性值时，处理该属性
+        7、将构造函数的options.props中的属性值赋值为(data中的prop或attrs对应的属性值 || undefined)
+        8、功能型函数生成功能型组件并return该组件实例
+        9、对抽象组件只保留props、listeners和slot
+        10、往data.hook对象中添加或合并init、prepatch、insert、destroy这四个事件
+        11、创建该组件节点,组件名为vue-component-构造函数标识符cid(-名字 || '')
+        12、return该组件节点
 */
 export function createComponent (
   Ctor: Class<Component> | Function | Object | void,//当前组件类
@@ -186,21 +193,30 @@ export function createComponent (
   // 将构造函数的options.props中的属性值赋值为(data中的prop或attrs对应的属性值 || undefined)
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
-  // functional component
+  // functional component 功能型函数比如router-view
   if (isTrue(Ctor.options.functional)) {
+    // 生成功能型组件
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
 
   // extract listeners, since these needs to be treated as
+  // 提取监听器，因为这些监听器需要被当作
   // child component listeners instead of DOM listeners
+  // 子组件监听器而不是DOM监听器
+
+  // 缓存参数传入的监听事件集合
   const listeners = data.on
   // replace with listeners with .native modifier
+  // 用.native修饰符替换监听器
   // so it gets processed during parent component patch.
+  // 因此它在父组件补丁中被处理。
   data.on = data.nativeOn
-
+  // 判断是否为抽象组件比如keep-alive
   if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
+    // 抽象组件不保存任何东西
     // other than props & listeners & slot
+    // 除了props、listeners和slot
 
     // work around flow
     const slot = data.slot
@@ -211,10 +227,13 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 往data.hook对象中添加或合并init、prepatch、insert、destroy这四个事件
   installComponentHooks(data)
 
   // return a placeholder vnode
+  // 获取构造函数名或标签名
   const name = Ctor.options.name || tag
+  // 创建该组件节点,组件名为vue-component-构造函数标识符cid(-名字 || '')
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
     data, undefined, undefined, undefined, context,
@@ -229,7 +248,7 @@ export function createComponent (
   if (__WEEX__ && isRecyclableComponent(vnode)) {
     return renderRecyclableComponentTemplate(vnode)
   }
-
+  // 将该组件节点输出
   return vnode
 }
 
@@ -250,19 +269,28 @@ export function createComponentInstanceForVnode (
   }
   return new vnode.componentOptions.Ctor(options)
 }
-
+/*
+  作用: 往data.hook对象中添加或合并init、prepatch、insert、destroy这四个事件
+*/
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
+  // 循环init、prepatch、insert、destroy这个四个key
   for (let i = 0; i < hooksToMerge.length; i++) {
+    // 获取事件名
     const key = hooksToMerge[i]
+    // 获取参数中传入的该事件函数
     const existing = hooks[key]
+    // 获取componentVNodeHooks变量中该事件函数
     const toMerge = componentVNodeHooks[key]
+    // 判断两者是否相同 && 没有合并过时,将两个事件当做参数放入一个新建的函数中执行 || 将componentVNodeHooks变量中该事件函数赋值给data.hook中
     if (existing !== toMerge && !(existing && existing._merged)) {
       hooks[key] = existing ? mergeHook(toMerge, existing) : toMerge
     }
   }
 }
-
+/*
+  作用: 将2个函数当做参数放入一个新建的函数中执行,并设置_merged为true,然后将这个新函数输出
+*/
 function mergeHook (f1: any, f2: any): Function {
   const merged = (a, b) => {
     // flow complains about extra args which is why we use any

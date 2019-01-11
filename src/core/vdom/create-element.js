@@ -56,7 +56,23 @@ export function createElement (
   // 输出_createElement函数并传入处理过的参数
   return _createElement(context, tag, data, children, normalizationType)
 }
-
+/*
+  作用:
+        1、当data存在 && 该数据是观察者数据 收集警告信息‘避免使用观察到的数据对象作为vnode数据’,并return一个空节点
+        2、当data存在 && data.is属性(组件名)存在时，设置组件名为标签名
+        3、不存在标签名时,return一个文本为空的注释节点或空节点
+        4、非生产环境下 && (data存在) && (data.key存在) && data.key不为string、number、symbol、boolean类型时提示
+          'key属性请用string或number类型的值,避免使用非原始值'
+        5、子节点为数组形式 && 第一个子节点是函数形式的时,设置data为原data或空对象,设置data.scopedSlot对象中的default属性为第一个子节点,
+            初始化children数据为空数组
+        6、当时开发者调用$createElement这个api时(可能是jsx、单文件组件等等),生成一个处理过的子节点数组结合;当normalizationType参数为1时,
+            生成一个新的children数组或原children数组
+        7、当标签名类型为string时,根据为html保留标签 || 组件实例有构造函数 || 二者都不为进行分别处理，生成组件节点
+        8、当标签名类型不为string时,通过构造函数生成组件节点
+        9、当生成的组件节点为多个时，return 该组件节点集合
+        10、单个时对svg进行兼容处理和深度处理class和style的依赖项，并return 该组件节点
+        11、不存在组件节点时return空节点
+*/
 export function _createElement (
   context: Component,//当前组件实例
   tag?: string | Class<Component> | Function | Object,// 标签名 || 组件 || 函数 || 对象
@@ -64,7 +80,7 @@ export function _createElement (
   children?: any,// 子节点
   normalizationType?: number
 ): VNode | Array<VNode> {
-  // 当data不为undefined || null && 该数据是观察者数据 收集警告信息‘避免使用观察到的数据对象作为vnode数据’,
+  // 当data存在 && 该数据是观察者数据 收集警告信息‘避免使用观察到的数据对象作为vnode数据’,
   // 输出一个文本为空的注释节点或空节点
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
@@ -75,7 +91,7 @@ export function _createElement (
     return createEmptyVNode()
   }
   // object syntax in v-bind
-  // 当data不为undefined || null  && data.is属性(组件名)不为undefined || null时，设置组件名为标签名
+  // 当data存在 && data.is属性(组件名)存在时，设置组件名为标签名
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
@@ -85,7 +101,7 @@ export function _createElement (
     return createEmptyVNode()
   }
   // warn against non-primitive key
-  // 非生产环境下 && (data不为undefined || null) && (data.key不为undefined || null) && data.key不为string、number、symbol、boolean类型时
+  // 非生产环境下 && (data存在) && (data.key存在) && data.key不为string、number、symbol、boolean类型时
   if (process.env.NODE_ENV !== 'production' &&
     isDef(data) && isDef(data.key) && !isPrimitive(data.key)
   ) {
@@ -119,7 +135,7 @@ export function _createElement (
   // 当标签名类型为string时
   if (typeof tag === 'string') {
     let Ctor
-    // 当前组件实例的ns属性 || 判断标签是否为sug或math
+    // 当前组件实例的ns属性 || 判断标签是否为svg或math
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
     // 判断标签名是否为html保留标签或svg标签
     if (config.isReservedTag(tag)) {
@@ -132,12 +148,13 @@ export function _createElement (
       )
       // 读取当前实例中的$options中的components属性中的该组件的注册函数并且不为undefined时
     } else if (isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
-      // component
+      // component 生成组件节点
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
+      // 标签名为字符串 && 不为html保留标签 && 组件实例没有构造函数则直接生成组件节点
       vnode = new VNode(
         tag, data, children,
         undefined, undefined, context
@@ -145,19 +162,28 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
+    // 当标签名不为字符串时直接生成组件节点
     vnode = createComponent(tag, data, context, children)
   }
+  // 生成的组件节点为多个时,直接返回该节点集合
   if (Array.isArray(vnode)) {
     return vnode
+    // 当生成的组件节点存在&&不为数组时
   } else if (isDef(vnode)) {
+    // 存在svg兼容问题时，单独进行处理
     if (isDef(ns)) applyNS(vnode, ns)
+    // 当data不为空时,深度处理class和style的依赖项
     if (isDef(data)) registerDeepBindings(data)
+    // 将处理过后的组件节点输出
     return vnode
   } else {
+    // 创建空节点
     return createEmptyVNode()
   }
 }
-
+/*
+  作用: 对IE浏览器的svg进行特殊兼容处理
+*/
 function applyNS (vnode, ns, force) {
   vnode.ns = ns
   if (vnode.tag === 'foreignObject') {
@@ -179,6 +205,12 @@ function applyNS (vnode, ns, force) {
 // ref #5318
 // necessary to ensure parent re-render when deep bindings like :style and
 // :class are used on slot nodes
+
+/*
+  作用:必须确保父元素在深度绑定时重新呈现，比如:style和:class在槽节点上使用
+      1、判断绑定的style是否为对象,并且深度收集依赖项
+      2、判断绑定的class是否为对象,并且深度收集依赖项
+*/
 function registerDeepBindings (data) {
   if (isObject(data.style)) {
     traverse(data.style)
