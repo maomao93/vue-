@@ -175,7 +175,16 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
   }
 }
-
+/*
+  作用:
+        1、设置实例的$el为实例挂载的节点
+        2、当$options中没有渲染函数时,设置render函数为一个创建空节点的函数;
+           并且提示错误信息'现在使用的vue是运行时,模板编译器不可用,请将模板编译成render函数
+           或者使用完整版的vue'(前提存在有template) || 提示'挂载组件失败,没有模板和render函数'
+        3、执行beforeMount钩子函数
+        4、为该组件的渲染函数生成一个观察实例,并定义了before函数，其中执行beforeUpdate钩子函数
+        5、执行mounted钩子函数
+*/
 export function mountComponent (
   vm: Component,
   el: ?Element,
