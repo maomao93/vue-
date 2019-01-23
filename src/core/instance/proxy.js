@@ -44,7 +44,7 @@ if (process.env.NODE_ENV !== 'production') {
     })
   }
 
-  //添加for in 循环时的拦截
+  //比如: in运算符的拦截，但对for...in循环不生效
   const hasHandler = {
     //拦截key in target的操作，返回一个布尔值
     has (target, key) {

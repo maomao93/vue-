@@ -146,7 +146,7 @@ export function remove (arr: Array<any>, item: any): Array<any> | void {
 /**
  * Check whether the object has the property.
  */
-//用来判断一个属性是定义在对象本身而不是继承自原型链
+//用来判断一个属性是定义在对象本身而不是继承自原型链或不存在这个属性
 const hasOwnProperty = Object.prototype.hasOwnProperty
 export function hasOwn (obj: Object | Array<*>, key: string): boolean {
   return hasOwnProperty.call(obj, key)
