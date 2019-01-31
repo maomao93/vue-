@@ -35,7 +35,7 @@ let macroTimerFunc
 let useMacroTask = false
 /*
   macro-task(宏任务)包括：script(整体代码), setTimeout, setInterval, setImmediate, I/O, UI rendering。
-  micro-task(微任务)包括：process.nextTick, Promises, Object.observe, MutationObserver。
+  micro-task(微任务)包括：process.nextTick, Promise, Object.observe, MutationObserver。
   执行顺序：函数调用栈清空只剩全局执行上下文，然后开始执行所有的micro-task。
           当所有可执行的micro-task执行完毕之后。循环再次执行macro-task中的一个任务队列，
           执行完之后再执行所有的micro-task，就这样一直循环。

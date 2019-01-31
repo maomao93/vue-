@@ -136,12 +136,12 @@ if (process.env.NODE_ENV !== 'production') {
       return '\n\nfound in\n\n' + tree
         .map((vm, i) => `${
           i === 0 ? '---> ' : repeat(' ', 5 + i * 2)
-        }${
+          }${
           // 为递归组件时,返回组件名以及所在路径并确定时那一层的递归组件;否则返回组件名以及所在路径
           Array.isArray(vm)
             ? `${formatComponentName(vm[0])}... (${vm[1]} recursive calls)`
             : formatComponentName(vm)
-        }`)
+          }`)
         .join('\n')
     } else {
       // 根实例直接返回<root> at 组件在文件中的路径名

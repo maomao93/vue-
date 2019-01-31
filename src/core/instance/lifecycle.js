@@ -340,7 +340,11 @@ function isInInactiveTree (vm) {
   }
   return false
 }
-
+/*
+  作用:
+        1、用于改变组件的激活状态
+        2、执行组件的activated生命周期函数
+*/
 export function activateChildComponent (vm: Component, direct?: boolean) {
   if (direct) {
     vm._directInactive = false
