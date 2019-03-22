@@ -77,7 +77,7 @@ export function isRegExp (v: any): boolean {
  */
 /*判断转换为浮点小数后是否>=0 && 向下取值等于自身 && 并且不是无穷数*/
 export function isValidArrayIndex (val: any): boolean {
-  const n = parseFloat(String(val)) //获取字符串的第一个浮点小数
+  const n = parseFloat(String(val)) //转化字符串为浮点小数
   return n >= 0 && Math.floor(n) === n && isFinite(val)
 }
 

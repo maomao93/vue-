@@ -105,7 +105,7 @@ export function withMacroTask (fn: Function): Function {
   })
 }
 
-//全局API this.nextTick(),第一个参数是回调函数，第二个参数是改变回调的作用域(这个方法会强制使视图重新渲染)
+//全局API this.nextTick(),第一个参数是回调函数，第二个参数是改变回调的作用域
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
   //callbacks数组中添加函数(包含回调函数的函数)

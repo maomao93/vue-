@@ -29,7 +29,7 @@ export function initExtend (Vue: GlobalAPI) {
   */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
-    const Super = this//获取实例
+    const Super = this//获取Vue构造函数
     const SuperId = Super.cid//获取当前组件构造函数的标识符
     // 缓存参数的构造函数 || 空对象
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})

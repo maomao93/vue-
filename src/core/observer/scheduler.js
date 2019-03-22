@@ -122,7 +122,9 @@ function callUpdatedHooks (queue) {
 
 /**
  * Queue a kept-alive component that was activated during patch.
+ * 队列在补丁期间激活的kept-alive组件。
  * The queue will be processed after the entire tree has been patched.
+ * 队列将在整个树被修补后处理。
  */
 export function queueActivatedComponent (vm: Component) {
   // setting _inactive to false here so that a render function can

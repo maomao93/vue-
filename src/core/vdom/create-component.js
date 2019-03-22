@@ -261,7 +261,7 @@ export function createComponentInstanceForVnode (
     _parentVnode: vnode,
     parent
   }
-  // check inline-template render functions
+  // check inline-template render functions 检查该虚拟节点是否为内联模板渲染函数
   const inlineTemplate = vnode.data.inlineTemplate
   if (isDef(inlineTemplate)) {
     options.render = inlineTemplate.render
