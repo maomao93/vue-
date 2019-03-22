@@ -35,7 +35,7 @@ const strats = config.optionMergeStrategies
           `option "${key}" can only be used during instance ` +
           'creation with the `new` keyword.'
         )
-      }
+      } 
       return child === undefined ? parent : child
     },
     propsData: function (parent, child, vm, key) {
