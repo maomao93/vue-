@@ -28,14 +28,14 @@ import {
 /*结论: 拿不到 vm 参数，那么处理的就是子组件的选项,因为子组件是不需要实例化的,是通过Vue.extend创造出来的*/
 const strats = config.optionMergeStrategies
   //初始化strats对象
-/*  strats = {
+/* strats = {
     el: function (parent, child, vm, key) {
       if (!vm) {
         warn(
           `option "${key}" can only be used during instance ` +
           'creation with the `new` keyword.'
         )
-      } 
+      }
       return child === undefined ? parent : child
     },
     propsData: function (parent, child, vm, key) {

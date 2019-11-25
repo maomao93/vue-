@@ -198,7 +198,7 @@ function initData (vm: Component) {
           1、存在关联的视图: 将关联视图的watcher实例放入这个属性的私有Dep实例的subs中
             1、这个属性新值是对象或数组: 将关联视图的watcher实例放入childOb(将newVal改造的Observer实例)的Dep实例的subs中(保存在方法的内存中)
               1、数组: 将关联视图的watcher实例放入新值的__ob__属性(Observer实例)的Dep实例的subs中(其实和上面一样,因为__ob__属性的值 = newVal改造的Observer实例)
-                然后递归判断新值的key书否还是数组，并重复上一步
+                然后递归判断新值的key是否还是数组，并重复上一步
               2、不是
             2、不存在
           2、不存在

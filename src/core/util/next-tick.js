@@ -113,7 +113,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
     //是否存在回调函数
     if (cb) {
       try {
-        //执行回调函数(因为回调函数时开发者自己定义的,所有有错误提示机制)
+        //执行回调函数(因为回调函数时开发者自己定义的,所以有错误提示机制)
         cb.call(ctx)
       } catch (e) {
         handleError(e, ctx, 'nextTick')
